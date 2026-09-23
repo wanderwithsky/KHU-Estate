@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  SENIOR_TL
+  TEAM_LEADER
+  ASSOCIATE
+}
+
+enum ApplicationStatus {
+  PENDING_TL_REVIEW
+  PENDING_STL_REVIEW
+  APPROVED
+  DECLINED_BY_TL
+  DECLINED_BY_STL
+  ACCOUNT_CREATION_PENDING
+  ACCOUNT_CREATED
+  EMAIL_SENT
+  EMAIL_FAILED
+}
+
+model User {
+  id                   String    @id @default(uuid())
+  userCode             String    @unique @map("user_code")
+  role                 Role
+  fullName             String    @map("full_name")
+  email                String    @unique
+  mobile               String?   @unique
+  passwordHash         String    @map("password_hash")
+  profilePhoto         String?   @map("profile_photo")
+  address              String?
+  city                 String?
+  state                String?
+  joiningDate          DateTime? @default(now()) @map("joining_date")
+  status               String    @default("ACTIVE")
+  mustChangePassword   Boolean   @default(true) @map("must_change_password")
+
+  lastLoginAt          DateTime? @map("last_login_at")
+  lastLogoutAt         DateTime? @map("last_logout_at")
+  lastActivityAt       DateTime? @map("last_activity_at")
+
+  parentUserId         String?   @map("parent_user_id")
+  parent               User?     @relation("Hierarchy", fields: [parentUserId], references: [id])
+  children             User[]    @relation("Hierarchy")
+
+  sponsorId            String?   @map("sponsor_id")
+  sponsor              User?     @relation("Sponsorship", fields: [sponsorId], references: [id])
+  sponsoredUsers       User[]    @relation("Sponsorship")
+
+  teamId               String?   @map("team_id")
+  
+  seniorTlId           String?   @map("senior_tl_id")
+  seniorTl             User?     @relation("STLHierarchy", fields: [seniorTlId], references: [id])
+  associatesUnderStl   User[]    @relation("STLHierarchy")
+
+  applicationsAsTl     AssociateApplication[] @relation("AssignedTL")
+  applicationsAsStl    AssociateApplication[] @relation("AssignedSTL")
+  loginSessions        LoginSession[]
+
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model AssociateApplication {
+  id                   String            @id @default(uuid())
+  fullName             String            @map("full_name")
+  phone                String
+  email                String
+  city                 String?
+  message              String?
+  source               String?           @default("website")
+  status               ApplicationStatus @default(PENDING_TL_REVIEW)
+  
+  assignedTeamLeaderId String?           @map("assigned_team_leader_id")
+  assignedTeamLeader   User?             @relation("AssignedTL", fields: [assignedTeamLeaderId], references: [id])
+
+  assignedSeniorTlId   String?           @map("assigned_senior_tl_id")
+  assignedSeniorTl     User?             @relation("AssignedSTL", fields: [assignedSeniorTlId], references: [id])
+
+  declinedBy           String?           @map("declined_by")
+  declineReason        String?           @map("decline_reason")
+  declinedAt           DateTime?         @map("declined_at")
+
+  history              ApplicationHistory[]
+  
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+
+  @@map("associate_applications")
+}
+
+model ApplicationHistory {
+  id             String               @id @default(uuid())
+  applicationId  String               @map("application_id")
+  application    AssociateApplication @relation(fields: [applicationId], references: [id])
+  status         String
+  actorUserId    String?              @map("actor_user_id")
+  comments       String?
+  createdAt      DateTime             @default(now()) @map("created_at")
+
+  @@map("application_history")
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  actorUserId    String?  @map("actor_user_id")
+  action         String
+  module         String
+  entityId       String?  @map("entity_id")
+  previousStatus String?  @map("previous_status")
+  newStatus      String?  @map("new_status")
+  metadata       String?
+  ipAddress      String?  @map("ip_address")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}
+
+model Notification {
+  id              String   @id @default(uuid())
+  recipientUserId String   @map("recipient_user_id")
+  type            String
+  title           String
+  message         String
+  entityType      String?  @map("entity_type")
+  entityId        String?  @map("entity_id")
+  read            Boolean  @default(false)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
+model LoginSession {
+  id             String    @id @default(uuid())
+  sessionId      String    @unique @map("session_id")
+  userId         String    @map("user_id")
+  user           User      @relation(fields: [userId], references: [id])
+  loginAt        DateTime  @default(now()) @map("login_at")
+  logoutAt       DateTime? @map("logout_at")
+  lastActivityAt DateTime  @default(now()) @map("last_activity_at")
+  status         String    @default("ACTIVE") // ACTIVE, ENDED, EXPIRED, FORCED_LOGOUT
+  ipAddress      String?   @map("ip_address")
+  userAgent      String?   @map("user_agent")
+  deviceInfo     String?   @map("device_info")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@map("login_sessions")
+}
+
+model SystemSetting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+  
+  @@map("system_settings")
+}
