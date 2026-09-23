@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { projects, plots } from '../data/projects';
 
 export default function ProjectDetails() {
-  const { id } = useParams();
-  const project = projects.find(p => p.id === 'maa-kundwasini-nagar'); // Mock matching
+  const { slug } = useParams();
+  const project = projects.find(p => p.id === (slug || 'maa-kundwasini-nagar')); // Use slug from route
   
   const [filterType, setFilterType] = useState('ALL');
   
