@@ -78,8 +78,13 @@ serve(async (req) => {
       .eq('role', 'ASSOCIATE')
 
     const userCode = `ASSOC${String((count || 0) + 1).padStart(4, '0')}`
-    const tlParentId = application.assigned_tl_id || profile.id;
-    const stlParentId = application.assigned_stl_id || profile.senior_tl_id;
+    
+    // If ADMIN approves directly without TL, it remains unassigned. 
+    // If TL approves, or Admin approves an assigned one, use the assigned_tl_id or TL's id.
+    const tlParentId = application.assigned_tl_id || (profile.role === 'TEAM_LEADER' ? profile.id : null);
+    
+    // If TL parent exists, we ideally want their senior_tl_id. If application has it, use it. 
+    const stlParentId = application.assigned_stl_id || (profile.role === 'TEAM_LEADER' ? profile.senior_tl_id : null);
 
     // 8. Create User Profile
     const { error: insertProfileError } = await supabaseClient
@@ -94,7 +99,7 @@ serve(async (req) => {
         city: application.city,
         parent_user_id: tlParentId,
         senior_tl_id: stlParentId,
-        team_id: profile.team_id,
+        team_id: profile.role === 'TEAM_LEADER' ? profile.team_id : null,
         sponsor_id: application.sponsor_id || tlParentId,
         must_change_password: true,
         status: 'ACTIVE'

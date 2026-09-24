@@ -7,7 +7,8 @@ export default function JoinAssociate() {
     phone: '',
     email: '',
     city: '',
-    message: ''
+    message: '',
+    referralCode: ''
   });
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -18,6 +19,24 @@ export default function JoinAssociate() {
     setErrorMessage('');
 
     try {
+      let assignedTlId = null;
+
+      if (formData.referralCode.trim()) {
+        const { data: tlData, error: tlError } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('user_code', formData.referralCode.trim())
+          .eq('role', 'TEAM_LEADER')
+          .eq('status', 'ACTIVE')
+          .single();
+
+        if (tlError || !tlData) {
+          throw new Error('Invalid Team Leader Code. Please check the code or leave it blank to submit your application to Admin.');
+        }
+        
+        assignedTlId = tlData.id;
+      }
+
       const applicationNumber = `APP-${Math.floor(Date.now() / 1000)}`;
 
       const { error: insertError } = await supabase
@@ -29,7 +48,9 @@ export default function JoinAssociate() {
           email: formData.email,
           city: formData.city,
           message: formData.message,
-          status: 'PENDING_TL_REVIEW',
+          referral_code: formData.referralCode.trim() || null,
+          assigned_tl_id: assignedTlId,
+          status: 'PENDING_TL_REVIEW', // Both use this status, but Admin looks for assigned_tl_id IS NULL
           source: 'Website'
         }]);
 
@@ -38,7 +59,7 @@ export default function JoinAssociate() {
       }
 
       setStatus('success');
-      setFormData({ fullName: '', phone: '', email: '', city: '', message: '' });
+      setFormData({ fullName: '', phone: '', email: '', city: '', message: '', referralCode: '' });
     } catch (error: any) {
       console.error('Error:', error);
       setStatus('error');
@@ -144,15 +165,30 @@ export default function JoinAssociate() {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs tracking-[0.1em] uppercase text-brand-charcoal font-medium">City</label>
-                <input 
-                  type="text" 
-                  value={formData.city}
-                  onChange={(e) => setFormData({...formData, city: e.target.value})}
-                  className="w-full border border-brand-soft-grey bg-brand-off-white px-4 py-3 focus:outline-none focus:border-brand-architectural-blue focus:bg-white transition-colors" 
-                  placeholder="e.g. Robertsganj" 
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs tracking-[0.1em] uppercase text-brand-charcoal font-medium">City</label>
+                  <input 
+                    type="text" 
+                    value={formData.city}
+                    onChange={(e) => setFormData({...formData, city: e.target.value})}
+                    className="w-full border border-brand-soft-grey bg-brand-off-white px-4 py-3 focus:outline-none focus:border-brand-architectural-blue focus:bg-white transition-colors" 
+                    placeholder="e.g. Robertsganj" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs tracking-[0.1em] uppercase text-brand-charcoal font-medium">Team Leader Code (Optional)</label>
+                  <input 
+                    type="text" 
+                    value={formData.referralCode}
+                    onChange={(e) => setFormData({...formData, referralCode: e.target.value})}
+                    className="w-full border border-brand-soft-grey bg-brand-off-white px-4 py-3 focus:outline-none focus:border-brand-architectural-blue focus:bg-white transition-colors" 
+                    placeholder="Enter Team Leader Code" 
+                  />
+                  <p className="text-xs text-brand-charcoal/60 mt-1 leading-relaxed">
+                    Have a Team Leader Code? Enter it to join directly under that Team Leader. Don't have one? Leave it blank and Admin will review your application.
+                  </p>
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-xs tracking-[0.1em] uppercase text-brand-charcoal font-medium">Message (Optional)</label>

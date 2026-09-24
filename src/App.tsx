@@ -12,6 +12,7 @@ import JoinAssociate from './pages/JoinAssociate';
 import Login from './pages/Login';
 import AdminLayout from './components/AdminLayout';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminApplications from './pages/admin/AdminApplications';
 import AdminUsers from './pages/admin/AdminUsers';
 import SeniorTLLayout from './components/SeniorTLLayout';
 import SeniorTLDashboard from './pages/senior-tl/SeniorTLDashboard';
@@ -66,7 +67,7 @@ function App() {
             </ProtectedRoute>
           }>
             <Route index element={<AdminDashboard />} />
-            <Route path="applications" element={<div className="p-6">Applications Module (Coming Soon)</div>} />
+            <Route path="applications" element={<AdminApplications />} />
             <Route path="users" element={<AdminUsers />} />
           </Route>
 
