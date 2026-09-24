@@ -42,22 +42,15 @@ export default function AdminUsers() {
     setSuccess('');
 
     try {
-      const response = await fetch('https://[PROJECT_REF].supabase.co/functions/v1/create-stl', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify(formData)
+      const { data, error: invokeError } = await supabase.functions.invoke('create-stl', {
+        body: formData
       });
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create Senior TL');
+      if (invokeError) {
+        throw new Error(invokeError.message || 'Failed to create Senior TL');
       }
 
-      setSuccess(`Success! Code: ${result.userCode}, Temp Password: ${result.tempPassword}`);
+      setSuccess(`Success! Code: ${data.userCode}, Temp Password: ${data.tempPassword}`);
       setFormData({ fullName: '', email: '', mobile: '', address: '', joiningDate: new Date().toISOString().split('T')[0] });
       fetchUsers();
     } catch (err: any) {

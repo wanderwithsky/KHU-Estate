@@ -46,22 +46,15 @@ export default function SeniorTLTeam() {
     setSuccess('');
 
     try {
-      const response = await fetch('https://[PROJECT_REF].supabase.co/functions/v1/create-tl', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify(formData)
+      const { data, error: invokeError } = await supabase.functions.invoke('create-tl', {
+        body: formData
       });
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create Team Leader');
+      if (invokeError) {
+        throw new Error(invokeError.message || 'Failed to create Team Leader');
       }
 
-      setSuccess(`Success! Code: ${result.userCode}, Temp Password: ${result.tempPassword}`);
+      setSuccess(`Success! Code: ${data.userCode}, Temp Password: ${data.tempPassword}`);
       setFormData({ fullName: '', email: '', mobile: '', address: '', joiningDate: new Date().toISOString().split('T')[0] });
       fetchTeamLeaders();
     } catch (err: any) {

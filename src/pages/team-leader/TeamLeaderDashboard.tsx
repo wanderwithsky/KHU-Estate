@@ -41,26 +41,19 @@ export default function TeamLeaderDashboard() {
     setProcessing(true);
     setError('');
     try {
-      const response = await fetch('https://[PROJECT_REF].supabase.co/functions/v1/create-associate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({
+      const { data, error: invokeError } = await supabase.functions.invoke('create-associate', {
+        body: {
           applicationId: selectedApp.id,
           fullName: selectedApp.full_name,
           email: selectedApp.email
-        })
+        }
       });
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create Associate account');
+      if (invokeError) {
+        throw new Error(invokeError.message || 'Failed to create Associate account');
       }
 
-      setSuccess(`Account Created! Code: ${result.userCode}, Temp Password: ${result.tempPassword}`);
+      setSuccess(`Account Created! Code: ${data.userCode}, Temp Password: ${data.tempPassword}`);
       setTimeout(() => {
         setShowApproveModal(false);
         setSuccess('');
