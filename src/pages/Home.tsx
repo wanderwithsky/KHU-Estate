@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import Hero from '../sections/Hero';
-import BrandIntro from '../sections/BrandIntro';
+
 import FeaturedProject from '../sections/FeaturedProject';
 import WhyKhu from '../sections/WhyKhu';
 
@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <div className="w-full">
       <Hero />
-      <BrandIntro />
+
       <FeaturedProject />
       <WhyKhu />
       
