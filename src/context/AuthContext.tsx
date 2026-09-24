@@ -102,23 +102,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (profileData) {
         currentLoginSessionId = crypto.randomUUID();
-        await supabase.from('login_sessions').insert({
+        const { error: insertError } = await supabase.from('login_sessions').insert({
           session_id: currentLoginSessionId,
           user_id: profileData.id,
           status: 'ACTIVE',
         });
+        if (insertError) {
+          // login_sessions table may not exist yet in production — silently skip
+          currentLoginSessionId = null;
+        }
       }
-    } catch (e) {
-      console.error('Failed to track login', e);
+    } catch {
+      // Session tracking is non-critical — never block authentication
+      currentLoginSessionId = null;
     }
   };
 
   const logout = async () => {
     if (currentLoginSessionId) {
-      await supabase.from('login_sessions').update({
-        logout_at: new Date().toISOString(),
-        status: 'ENDED'
-      }).eq('session_id', currentLoginSessionId);
+      try {
+        await supabase.from('login_sessions').update({
+          logout_at: new Date().toISOString(),
+          status: 'ENDED'
+        }).eq('session_id', currentLoginSessionId);
+      } catch {
+        // Non-critical — table may not exist in production yet
+      }
       currentLoginSessionId = null;
     }
     await supabase.auth.signOut();
@@ -126,9 +135,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const pingHeartbeat = async () => {
     if (currentLoginSessionId) {
-      await supabase.from('login_sessions').update({
-        last_activity_at: new Date().toISOString()
-      }).eq('session_id', currentLoginSessionId);
+      try {
+        await supabase.from('login_sessions').update({
+          last_activity_at: new Date().toISOString()
+        }).eq('session_id', currentLoginSessionId);
+      } catch {
+        // Non-critical — table may not exist in production yet
+      }
     }
   };
 

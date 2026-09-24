@@ -51,6 +51,10 @@ export default function Login() {
       });
 
       if (authError) {
+        console.error('Supabase Auth Error:', authError.message, authError.status);
+        if (authError.message === 'Invalid login credentials') {
+          throw new Error('Invalid email or password. Please check your credentials and try again.');
+        }
         throw new Error(authError.message);
       }
       
@@ -62,6 +66,7 @@ export default function Login() {
           .single();
 
         if (profileError || !profileData) {
+          console.error('Profile fetch error:', profileError?.message);
           await supabase.auth.signOut();
           throw new Error('Your account profile could not be found. Please contact the administrator.');
         }
