@@ -1,14 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { session, profile } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in and profile is loaded
+  useEffect(() => {
+    if (session && profile) {
+      if (profile.role === 'ADMIN') navigate('/admin');
+      else if (profile.role === 'SENIOR_TL') navigate('/senior-team-leader');
+      else if (profile.role === 'TEAM_LEADER') navigate('/team-leader');
+      else if (profile.role === 'ASSOCIATE') navigate('/associate');
+      else navigate('/');
+    }
+  }, [session, profile, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,42 +28,17 @@ export default function Login() {
     setError('');
 
     try {
-      // Temporary frontend mock until backend DB is connected
-      if (email === 'admin@khuestate.com' && password === 'admin123') {
-        login('mock-jwt-token', {
-          id: '1',
-          userCode: 'ADMIN001',
-          role: 'ADMIN',
-          fullName: 'System Admin',
-          email: 'admin@khuestate.com'
-        });
-        navigate('/admin');
-        return;
-      }
-      
-      // Real API call (will fail if backend is down)
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Login failed');
+      if (authError) {
+        throw new Error(authError.message);
       }
-
-      login(data.token, data.user);
       
-      // Redirect based on role
-      switch (data.user.role) {
-        case 'ADMIN': navigate('/admin'); break;
-        case 'SENIOR_TL': navigate('/senior-team-leader'); break;
-        case 'TEAM_LEADER': navigate('/team-leader'); break;
-        case 'ASSOCIATE': navigate('/associate'); break;
-        default: navigate('/');
-      }
+      // Note: The AuthContext onAuthStateChange will automatically pick up the session,
+      // fetch the profile, and then the useEffect above will trigger the redirect.
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -104,9 +91,6 @@ export default function Login() {
             {loading ? 'Authenticating...' : 'Secure Login'}
           </button>
         </form>
-        <div className="mt-6 text-center">
-          <p className="text-xs text-brand-charcoal/50">For demo purposes use:<br/>admin@khuestate.com / admin123</p>
-        </div>
       </div>
     </div>
   );

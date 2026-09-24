@@ -1,93 +1,145 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '../lib/supabase';
+import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
-type UserRole = 'ADMIN' | 'SENIOR_TL' | 'TEAM_LEADER' | 'ASSOCIATE';
-
-interface User {
+interface UserProfile {
   id: string;
-  userCode: string;
-  role: UserRole;
-  fullName: string;
+  user_code: string;
+  role: string;
+  full_name: string;
   email: string;
+  status: string;
+  must_change_password?: boolean;
+  parent_user_id?: string;
+  senior_tl_id?: string;
+  team_id?: string;
 }
 
+// Track current session ID so we can close it on logout
+let currentLoginSessionId: string | null = null;
+
 interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  login: (token: string, user: User) => void;
-  logout: () => void;
-  isAuthenticated: boolean;
+  session: Session | null;
+  user: SupabaseUser | null;
+  profile: UserProfile | null;
+  isInitialized: boolean;
+  logout: () => Promise<void>;
+  pingHeartbeat: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Check localStorage on mount
-    const storedToken = localStorage.getItem('khu_auth_token');
-    const storedUser = localStorage.getItem('khu_auth_user');
-
-    if (storedToken && storedUser) {
-      try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error('Failed to parse stored user');
+    // Fetch initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setIsInitialized(true);
       }
-    }
-    setIsInitialized(true);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+          if (_event === 'SIGNED_IN') {
+             await trackLogin(session.user.id);
+          }
+        } else {
+          setProfile(null);
+          setIsInitialized(true);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Heartbeat interval
-  useEffect(() => {
-    if (!token) return;
-
-    const interval = setInterval(async () => {
-      try {
-        await fetch('/api/auth/heartbeat', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-      } catch (e) {
-        // Silently fail for heartbeat
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('auth_user_id', userId)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching user profile:', error.message);
+      } else {
+        setProfile(data);
       }
-    }, 60000); // 60 seconds
-
-    return () => clearInterval(interval);
-  }, [token]);
-
-  const login = (newToken: string, newUser: User) => {
-    setToken(newToken);
-    setUser(newUser);
-    localStorage.setItem('khu_auth_token', newToken);
-    localStorage.setItem('khu_auth_user', JSON.stringify(newUser));
+    } catch (e) {
+      console.error('Failed to fetch profile', e);
+    } finally {
+      setIsInitialized(true);
+    }
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('khu_auth_token');
-    localStorage.removeItem('khu_auth_user');
+  const trackLogin = async (authUserId: string) => {
+    try {
+      const { data: profileData } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('auth_user_id', authUserId)
+        .single();
+
+      if (profileData) {
+        currentLoginSessionId = crypto.randomUUID();
+        await supabase.from('login_sessions').insert({
+          session_id: currentLoginSessionId,
+          user_id: profileData.id,
+          status: 'ACTIVE',
+        });
+      }
+    } catch (e) {
+      console.error('Failed to track login', e);
+    }
   };
 
-  if (!isInitialized) return null;
+  const logout = async () => {
+    if (currentLoginSessionId) {
+      await supabase.from('login_sessions').update({
+        logout_at: new Date().toISOString(),
+        status: 'ENDED'
+      }).eq('session_id', currentLoginSessionId);
+      currentLoginSessionId = null;
+    }
+    await supabase.auth.signOut();
+  };
+
+  const pingHeartbeat = async () => {
+    if (currentLoginSessionId) {
+      await supabase.from('login_sessions').update({
+        last_activity_at: new Date().toISOString()
+      }).eq('session_id', currentLoginSessionId);
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ session, user, profile, isInitialized, logout, pingHeartbeat }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 export default function JoinAssociate() {
   const [formData, setFormData] = useState({
@@ -17,17 +18,23 @@ export default function JoinAssociate() {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/associate-applications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const applicationNumber = `APP-${Math.floor(Date.now() / 1000)}`;
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit application');
+      const { error: insertError } = await supabase
+        .from('associate_applications')
+        .insert([{
+          application_number: applicationNumber,
+          full_name: formData.fullName,
+          phone: formData.phone,
+          email: formData.email,
+          city: formData.city,
+          message: formData.message,
+          status: 'PENDING_TL_REVIEW',
+          source: 'Website'
+        }]);
+
+      if (insertError) {
+        throw new Error(insertError.message);
       }
 
       setStatus('success');
@@ -35,7 +42,7 @@ export default function JoinAssociate() {
     } catch (error: any) {
       console.error('Error:', error);
       setStatus('error');
-      setErrorMessage(error.message);
+      setErrorMessage(error.message || 'Failed to submit application');
     }
   };
 
