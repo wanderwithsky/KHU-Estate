@@ -35,10 +35,12 @@ export default function FeaturedProject() {
             alt={project.name} 
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000"
           />
-          <div className="absolute top-6 right-6 bg-white px-6 py-3 shadow-lg">
-            <p className="text-xs tracking-[0.2em] uppercase text-brand-deep-navy font-bold mb-1">Limited Offer</p>
-            <p className="text-lg font-serif text-brand-architectural-blue">{project.offer.price}</p>
-          </div>
+          {project.offer && (
+            <div className="absolute top-6 right-6 bg-white px-6 py-3 shadow-lg">
+              <p className="text-xs tracking-[0.2em] uppercase text-brand-deep-navy font-bold mb-1">Limited Offer</p>
+              <p className="text-lg font-serif text-brand-architectural-blue">{project.offer.price}</p>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">

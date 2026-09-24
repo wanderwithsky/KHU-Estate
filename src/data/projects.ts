@@ -1,12 +1,99 @@
-export const projects = [
+export interface Project {
+  id: string;
+  name: string;
+  location: string;
+  developer: string;
+  type: string;
+  description: string;
+  coverImage: string;
+  offer?: {
+    price?: string;
+    details?: string;
+    terms?: string;
+  };
+  distances?: { location: string; distance: string }[];
+  amenities?: string[];
+}
+
+export const projects: Project[] = [
+  {
+    id: "happy-home",
+    name: "Happy Home",
+    location: "Near Urmaura, F.C.I. Godam, Robertsganj-Sonbhadra",
+    developer: "K.H.U. Developers Private Limited",
+    type: "Premium Plotted Development",
+    description: "A meticulously planned residential community offering a serene lifestyle with close proximity to essential facilities and Robertsganj center.",
+    coverImage: "/images/projects/project_happy_home.jpg",
+    amenities: ["30 ft Wide Roads", "Community Hall", "Park & Walking Area", "24x7 Security"]
+  },
+  {
+    id: "nature-city",
+    name: "Nature City",
+    location: "Near Urmaura, Sant Keenaram Mahavidyalaya Road, Robertsganj",
+    developer: "K.H.U. Developers Private Limited",
+    type: "Residential & Commercial Plots",
+    description: "Set against a peaceful landscape, Nature City provides an ideal environment for families and businesses looking for accessible and developing land.",
+    coverImage: "/images/projects/project_nature_city.jpg",
+    amenities: ["Temple", "Jogging Track", "Drainage Facility", "Shopping Complex"]
+  },
+  {
+    id: "laxmi-nagar",
+    name: "Laxmi Nagar",
+    location: "Near Chhapka Power House, Robertsganj-Sonbhadra",
+    developer: "K.H.U. Developers Private Limited",
+    type: "Residential Plots",
+    description: "Strategic investment plots located in a rapidly developing sector of Robertsganj, offering excellent connectivity and future valuation.",
+    coverImage: "/images/projects/project_highway.jpg",
+    amenities: ["30 ft Wide Roads", "Drainage Facility", "Park", "24x7 Security"]
+  },
+  {
+    id: "vikas-nagar",
+    name: "Vikas Nagar",
+    location: "Ward No. 22, Pusauli, Robertsganj-Sonbhadra",
+    developer: "K.H.U. Developers Private Limited",
+    type: "Residential Plots",
+    description: "Well-structured urban plots located in the heart of Ward No. 22, perfect for constructing your dream home in an established neighborhood.",
+    coverImage: "/images/projects/project_residential.jpg",
+    amenities: ["Community Hall", "Temple", "Drainage Facility", "Jogging Track"]
+  },
+  {
+    id: "kailashpuri",
+    name: "Kailashpuri (Phases 1 & 2)",
+    location: "Dharamshala Chowk, Ghorawal Road, Near Barela Mandir",
+    developer: "K.H.U. Developers Private Limited",
+    type: "Premium Plotted Development",
+    description: "Spanning multiple phases, Kailashpuri offers expansive plots in a highly sought-after location near the prominent Barela Mandir.",
+    coverImage: "/images/projects/project_nature_city.jpg",
+    amenities: ["30 ft Wide Roads", "Park & Walking Area", "Shopping Complex", "24x7 Security"]
+  },
+  {
+    id: "adarsh-nagar",
+    name: "Adarsh Nagar",
+    location: "Near Ghorawal Tehsil, Ghorawal-Sonbhadra",
+    developer: "K.H.U. Developers Private Limited",
+    type: "Residential & Commercial Plots",
+    description: "Located near key governmental infrastructure in Ghorawal, Adarsh Nagar is perfect for both immediate settlement and commercial utilization.",
+    coverImage: "/images/projects/project_highway.jpg",
+    amenities: ["30 ft Wide Roads", "Drainage Facility", "Temple", "Community Hall"]
+  },
+  {
+    id: "magleshwar-colony",
+    name: "Magleshwar Colony",
+    location: "Salkhan, Varanasi Shaktinagar Marg, Chopan-Sonbhadra",
+    developer: "K.H.U. Developers Private Limited",
+    type: "Highway Adjacent Plots",
+    description: "Prime highway-adjacent plots located on the Varanasi-Shaktinagar Marg, ensuring unparalleled visibility and long-term commercial potential.",
+    coverImage: "/images/projects/project_happy_home.jpg",
+    amenities: ["Shopping Complex", "24x7 Security", "Drainage Facility", "Park"]
+  },
   {
     id: "maa-kundwasini-nagar",
     name: "Maa Kundwasini Nagar",
     location: "Robertsganj, Sonbhadra",
     developer: "K.H.U. Developers Private Limited",
     type: "Mixed Use (Residential & Commercial)",
-    description: "Thoughtfully planned spaces for living, investing, and building what comes next.",
-    coverImage: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80",
+    description: "Thoughtfully planned spaces for living, investing, and building what comes next with our signature ONE PLOT + ONE PLOT FREE offer.",
+    coverImage: "/images/projects/project_residential.jpg",
     offer: {
       price: "₹899 / SQ.FT",
       details: "ONE PLOT + ONE PLOT FREE",
@@ -30,7 +117,7 @@ export const projects = [
   }
 ];
 
-// Sample based on provided plot dimensions and areas
+// Keep plots data
 export const plots = [
   { id: "P1", projectId: "maa-kundwasini-nagar", dimensions: "32x60", area: 1920, type: "Residential", status: "AVAILABLE" },
   { id: "P2", projectId: "maa-kundwasini-nagar", dimensions: "33x60", area: 1980, type: "Residential", status: "AVAILABLE" },

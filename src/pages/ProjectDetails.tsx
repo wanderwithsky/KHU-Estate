@@ -44,27 +44,31 @@ export default function ProjectDetails() {
           </p>
         </div>
         <div>
+          {project.offer && (
            <div className="bg-brand-warm-white p-12 border border-brand-soft-grey/50">
              <h3 className="text-xs tracking-[0.2em] text-brand-deep-navy uppercase font-bold mb-6">Limited Offer</h3>
              <p className="text-3xl font-serif text-brand-architectural-blue mb-2">{project.offer.price}</p>
              <p className="text-lg font-medium text-brand-charcoal mb-4">{project.offer.details}</p>
              <p className="text-xs text-brand-charcoal/60">{project.offer.terms}</p>
            </div>
+          )}
         </div>
       </div>
 
       {/* Location Advantage */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-12 mb-32">
-        <h2 className="text-3xl font-serif text-brand-deep-navy mb-12 text-center">LOCATION ADVANTAGES</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
-          {project.distances.map((loc, idx) => (
-            <div key={idx} className="text-center group">
-              <p className="text-2xl font-serif text-brand-architectural-blue mb-2 group-hover:scale-110 transition-transform">{loc.distance}</p>
-              <p className="text-xs tracking-widest uppercase font-medium text-brand-charcoal">{loc.location}</p>
-            </div>
-          ))}
+      {project.distances && project.distances.length > 0 && (
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 mb-32">
+          <h2 className="text-3xl font-serif text-brand-deep-navy mb-12 text-center">LOCATION ADVANTAGES</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+            {project.distances.map((loc, idx) => (
+              <div key={idx} className="text-center group">
+                <p className="text-2xl font-serif text-brand-architectural-blue mb-2 group-hover:scale-110 transition-transform">{loc.distance}</p>
+                <p className="text-xs tracking-widest uppercase font-medium text-brand-charcoal">{loc.location}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Inventory / Site Plan */}
       <div id="inventory" className="max-w-7xl mx-auto px-6 lg:px-12">
