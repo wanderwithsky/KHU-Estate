@@ -41,6 +41,7 @@ export default function Navbar() {
           <Link to="/about" className="hover:text-black transition-colors">About</Link>
           <Link to="/services" className="hover:text-black transition-colors">Services</Link>
           <Link to="/contact" className="hover:text-black transition-colors">Contact</Link>
+          <Link to="/login" className="hover:text-black transition-colors">Login</Link>
           
           <div className="relative group h-[60px] flex items-center">
             <button 
@@ -116,6 +117,7 @@ export default function Navbar() {
             { name: 'About', path: '/about' },
             { name: 'Services', path: '/services' },
             { name: 'Contact', path: '/contact' },
+            { name: 'Login', path: '/login' },
           ].map((item, i) => (
             <Link 
               key={item.name}
