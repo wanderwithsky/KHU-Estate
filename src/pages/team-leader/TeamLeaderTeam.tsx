@@ -4,15 +4,16 @@ import { useCurrentUser } from '../../hooks/useCurrentUser';
 import HierarchyNode from '../../components/HierarchyNode';
 import { formatUser } from '../../utils/formatUser';
 
-export default function SeniorTLTeam() {
+export default function TeamLeaderTeam() {
   const { profile } = useCurrentUser();
   const [tree, setTree] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [seniorTl, setSeniorTl] = useState<any>(null);
 
   useEffect(() => {
     const fetchHierarchy = async () => {
       setLoading(true);
-      // RLS should handle what is visible, but we can fetch everything available
+      // RLS limits fetching downline
       const { data: users, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -26,9 +27,7 @@ export default function SeniorTLTeam() {
       const buildTree = (user: any): any => {
         let children = users.filter(u => u.parent_user_id === user.id);
         if (children.length === 0) {
-          if (user.role === 'SENIOR_TL') {
-            children = users.filter(u => u.senior_tl_id === user.id && u.role === 'TEAM_LEADER');
-          } else if (user.role === 'TEAM_LEADER') {
+          if (user.role === 'TEAM_LEADER') {
             children = users.filter(u => u.parent_user_id === user.id && u.role === 'ASSOCIATE');
           }
         }
@@ -42,6 +41,18 @@ export default function SeniorTLTeam() {
       if (root) {
         setTree(buildTree(root));
       }
+
+      // Fetch reports to (Senior TL)
+      if (profile.senior_tl_id || profile.parent_user_id) {
+        // Normally, we'd fetch this. We can use RPC or Edge Function if RLS prevents reading upward.
+        // Assuming RLS allows upward reading of parent, or we can just fetch it directly.
+        const parentId = profile.senior_tl_id || profile.parent_user_id;
+        const { data: pData } = await supabase.from('user_profiles').select('*').eq('id', parentId).single();
+        if (pData) {
+          setSeniorTl(pData);
+        }
+      }
+
       setLoading(false);
     };
 
@@ -57,7 +68,7 @@ export default function SeniorTLTeam() {
           <h2 className="text-xl font-serif text-brand-deep-navy">My Team</h2>
           <p className="text-sm text-brand-charcoal/70 mt-1">
             You are: <span className="font-medium text-brand-architectural-blue">{formatUser(profile?.user_code, profile?.full_name)}</span> <br/>
-            Reports To: <span className="font-medium">Admin</span>
+            Reports To: <span className="font-medium">{seniorTl ? formatUser(seniorTl.user_code, seniorTl.full_name) : 'Admin'}</span>
           </p>
         </div>
       </div>

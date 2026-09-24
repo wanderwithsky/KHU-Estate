@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { formatUser } from '../../utils/formatUser';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 
 export default function AdminApplications() {
   const { profile } = useCurrentUser();
   const [applications, setApplications] = useState<any[]>([]);
   const [teamLeaders, setTeamLeaders] = useState<any[]>([]);
+  const [seniorTeamLeaders, setSeniorTeamLeaders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modals state
@@ -17,6 +19,7 @@ export default function AdminApplications() {
   // Action State
   const [declineReason, setDeclineReason] = useState('');
   const [selectedTlId, setSelectedTlId] = useState('');
+  const [selectedStlId, setSelectedStlId] = useState('');
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState('');
 
@@ -24,6 +27,7 @@ export default function AdminApplications() {
     if (profile?.role === 'ADMIN') {
       fetchApplications();
       fetchTeamLeaders();
+      fetchSeniorTeamLeaders();
     }
   }, [profile]);
 
@@ -31,7 +35,7 @@ export default function AdminApplications() {
     setLoading(true);
     const { data } = await supabase
       .from('associate_applications')
-      .select(`*, assigned_tl:assigned_tl_id (user_code, full_name)`)
+      .select(`*, assigned_tl:assigned_tl_id (user_code, full_name), assigned_stl:assigned_stl_id (user_code, full_name)`)
       .order('created_at', { ascending: false });
     
     if (data) setApplications(data);
@@ -47,21 +51,40 @@ export default function AdminApplications() {
     if (data) setTeamLeaders(data);
   };
 
+  const fetchSeniorTeamLeaders = async () => {
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('id, user_code, full_name')
+      .eq('role', 'SENIOR_TL')
+      .eq('status', 'ACTIVE');
+    if (data) setSeniorTeamLeaders(data);
+  };
+
   const handleApprove = async () => {
     if (!selectedApp) return;
     setProcessing(true);
     try {
-      const { data, error: invokeError } = await supabase.functions.invoke('create-associate', {
+      const role = selectedApp.role_applied_for || 'Associate';
+      let edgeFunction = 'create-associate';
+      if (role === 'Team Leader') edgeFunction = 'create-tl';
+      if (role === 'Senior Team Leader') edgeFunction = 'create-stl';
+
+      const { data, error: invokeError } = await supabase.functions.invoke(edgeFunction, {
         body: {
           applicationId: selectedApp.id,
-          fullName: selectedApp.full_name,
-          email: selectedApp.email,
           isAdminApproval: true // Special flag for Edge function
         }
       });
 
       if (invokeError) {
-        throw new Error(invokeError.message || 'Failed to create Associate account');
+        let errMessage = invokeError.message;
+        if (invokeError.context && typeof invokeError.context.json === 'function') {
+          try {
+            const errData = await invokeError.context.json();
+            errMessage = errData.error || errData.message || errMessage;
+          } catch(e) {}
+        }
+        throw new Error(errMessage || `Failed to create ${role} account`);
       }
 
       setSuccess(`Account Created! Code: ${data.userCode}, Temp Password: ${data.tempPassword}`);
@@ -103,21 +126,36 @@ export default function AdminApplications() {
   };
 
   const handleTransfer = async () => {
-    if (!selectedApp || !selectedTlId) return;
+    if (!selectedApp) return;
+    const isTLApp = selectedApp.role_applied_for === 'Team Leader';
+    const targetId = isTLApp ? selectedStlId : selectedTlId;
+
+    if (!targetId) return;
+    
     setProcessing(true);
     try {
-      const { error } = await supabase
-        .from('associate_applications')
-        .update({ 
-          assigned_tl_id: selectedTlId,
-          status: 'PENDING_TL_REVIEW'
-        })
-        .eq('id', selectedApp.id);
-
-      if (error) throw error;
+      if (isTLApp) {
+        // Use secure RPC for Team Leader transfer to Senior TL
+        const { error } = await supabase.rpc('transfer_tl_application', {
+          p_application_id: selectedApp.id,
+          p_senior_tl_id: targetId
+        });
+        if (error) throw error;
+      } else {
+        // Keep existing Associate transfer to Team Leader
+        const { error } = await supabase
+          .from('associate_applications')
+          .update({ 
+            assigned_tl_id: targetId,
+            status: 'PENDING_TL_REVIEW'
+          })
+          .eq('id', selectedApp.id);
+        if (error) throw error;
+      }
       
       setShowTransferModal(false);
       setSelectedTlId('');
+      setSelectedStlId('');
       fetchApplications();
     } catch (err: any) {
       alert(err.message || 'Error transferring application');
@@ -132,7 +170,7 @@ export default function AdminApplications() {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-brand-deep-navy">Associate Applications</h1>
+          <h1 className="text-2xl font-serif text-brand-deep-navy">Applications</h1>
           <p className="text-sm text-brand-charcoal/70">Global view of all applications</p>
         </div>
       </div>
@@ -142,9 +180,10 @@ export default function AdminApplications() {
           <thead className="bg-brand-off-white text-brand-charcoal text-xs uppercase tracking-wider">
             <tr>
               <th className="px-6 py-4 font-medium">Applicant</th>
+              <th className="px-6 py-4 font-medium">Role</th>
               <th className="px-6 py-4 font-medium">Contact</th>
-              <th className="px-6 py-4 font-medium">TL Code</th>
-              <th className="px-6 py-4 font-medium">Assigned TL</th>
+              <th className="px-6 py-4 font-medium">Referral Code</th>
+              <th className="px-6 py-4 font-medium">Assigned To</th>
               <th className="px-6 py-4 font-medium">Status</th>
               <th className="px-6 py-4 font-medium">Actions</th>
             </tr>
@@ -157,6 +196,9 @@ export default function AdminApplications() {
                   <div className="text-xs text-brand-charcoal/60">{new Date(app.created_at).toLocaleDateString()}</div>
                 </td>
                 <td className="px-6 py-4">
+                  <span className="text-sm font-medium">{app.role_applied_for || 'Associate'}</span>
+                </td>
+                <td className="px-6 py-4">
                   <div className="text-sm text-brand-charcoal">{app.email}</div>
                   <div className="text-sm text-brand-charcoal">{app.phone}</div>
                 </td>
@@ -164,7 +206,13 @@ export default function AdminApplications() {
                   <span className="text-sm font-medium">{app.referral_code || '-'}</span>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-sm">{app.assigned_tl ? `${app.assigned_tl.full_name} (${app.assigned_tl.user_code})` : 'Unassigned (Admin)'}</span>
+                  <span className="text-sm">
+                    {app.assigned_tl 
+                      ? `TL: ${formatUser(app.assigned_tl.user_code, app.assigned_tl.full_name)}` 
+                      : app.assigned_stl
+                      ? `STL: ${formatUser(app.assigned_stl.user_code, app.assigned_stl.full_name)}`
+                      : 'Unassigned (Admin)'}
+                  </span>
                 </td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 text-xs rounded-full font-medium ${
@@ -185,6 +233,7 @@ export default function AdminApplications() {
                         >
                           Approve
                         </button>
+
                         <button 
                           onClick={() => { setSelectedApp(app); setShowTransferModal(true); }}
                           className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
@@ -236,7 +285,7 @@ export default function AdminApplications() {
                 </div>
                 <div>
                   <p className="text-xs text-brand-charcoal/60 uppercase">Team Leader</p>
-                  <p className="font-medium">{selectedApp.assigned_tl ? selectedApp.assigned_tl.full_name : 'Not Assigned'}</p>
+                  <p className="font-medium">{selectedApp.assigned_tl ? formatUser(selectedApp.assigned_tl.user_code, selectedApp.assigned_tl.full_name) : 'Not Assigned'}</p>
                 </div>
               </div>
             )}
@@ -265,19 +314,64 @@ export default function AdminApplications() {
       {showTransferModal && selectedApp && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-serif text-brand-deep-navy mb-4">Transfer Application</h2>
-            <p className="text-sm mb-4">Select a Team Leader to transfer {selectedApp.full_name}'s application to:</p>
+            <h2 className="text-xl font-serif text-brand-deep-navy mb-4">
+              Transfer {selectedApp.role_applied_for === 'Team Leader' ? 'Team Leader' : 'Associate'} Application
+            </h2>
             
-            <select
-              value={selectedTlId}
-              onChange={(e) => setSelectedTlId(e.target.value)}
-              className="w-full border p-2 mb-6"
-            >
-              <option value="">Select Team Leader...</option>
-              {teamLeaders.map(tl => (
-                <option key={tl.id} value={tl.id}>{tl.user_code} - {tl.full_name}</option>
-              ))}
-            </select>
+            {selectedApp.role_applied_for === 'Team Leader' ? (
+              <>
+                <p className="text-sm mb-4">Select a Senior Team Leader to transfer {selectedApp.full_name}'s application to:</p>
+                {seniorTeamLeaders.length === 0 ? (
+                  <div className="p-4 bg-yellow-50 text-yellow-800 text-sm mb-6 rounded">
+                    No active Senior Team Leaders available.
+                  </div>
+                ) : (
+                  <select
+                    value={selectedStlId}
+                    onChange={(e) => setSelectedStlId(e.target.value)}
+                    className="w-full border p-2 mb-6 rounded"
+                  >
+                    <option value="">Select Senior Team Leader</option>
+                    {seniorTeamLeaders.map(stl => (
+                      <option key={stl.id} value={stl.id}>{stl.user_code} — {stl.full_name}</option>
+                    ))}
+                  </select>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-sm mb-4">Select a Team Leader to transfer {selectedApp.full_name}'s application to:</p>
+                {teamLeaders.length === 0 ? (
+                  <div className="p-4 bg-yellow-50 text-yellow-800 text-sm mb-6 rounded">
+                    No active Team Leaders available.
+                  </div>
+                ) : (
+                  <select
+                    value={selectedTlId}
+                    onChange={(e) => setSelectedTlId(e.target.value)}
+                    className="w-full border p-2 mb-6 rounded"
+                  >
+                    <option value="">Select Team Leader</option>
+                    {teamLeaders.map(tl => (
+                      <option key={tl.id} value={tl.id}>{tl.user_code} — {tl.full_name}</option>
+                    ))}
+                  </select>
+                )}
+              </>
+            )}
+
+            {(selectedApp.role_applied_for === 'Team Leader' ? selectedStlId : selectedTlId) && (
+              <div className="mb-6 p-4 bg-blue-50 text-blue-900 rounded-md">
+                <p className="text-xs font-semibold uppercase opacity-70 mb-1">
+                  Selected {selectedApp.role_applied_for === 'Team Leader' ? 'Senior Team Leader' : 'Team Leader'}:
+                </p>
+                <p className="font-medium text-sm">
+                  {selectedApp.role_applied_for === 'Team Leader' 
+                    ? seniorTeamLeaders.find(stl => stl.id === selectedStlId)?.user_code + ' — ' + seniorTeamLeaders.find(stl => stl.id === selectedStlId)?.full_name
+                    : teamLeaders.find(tl => tl.id === selectedTlId)?.user_code + ' — ' + teamLeaders.find(tl => tl.id === selectedTlId)?.full_name}
+                </p>
+              </div>
+            )}
 
             <div className="flex justify-end gap-3">
               <button 
@@ -288,8 +382,8 @@ export default function AdminApplications() {
               </button>
               <button 
                 onClick={handleTransfer}
-                disabled={processing || !selectedTlId}
-                className="px-4 py-2 text-sm bg-blue-500 text-white rounded disabled:opacity-50"
+                disabled={processing || (selectedApp.role_applied_for === 'Team Leader' ? !selectedStlId : !selectedTlId)}
+                className="px-4 py-2 text-sm bg-blue-500 text-white rounded disabled:opacity-50 hover:bg-blue-600"
               >
                 {processing ? 'TRANSFERRING...' : 'TRANSFER APPLICATION'}
               </button>

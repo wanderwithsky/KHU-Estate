@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import HierarchyNode from '../../components/HierarchyNode';
-import { formatUser } from '../../utils/formatUser';
 
-export default function SeniorTLTeam() {
+export default function AdminTeam() {
   const { profile } = useCurrentUser();
   const [tree, setTree] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -12,54 +11,52 @@ export default function SeniorTLTeam() {
   useEffect(() => {
     const fetchHierarchy = async () => {
       setLoading(true);
-      // RLS should handle what is visible, but we can fetch everything available
       const { data: users, error } = await supabase
         .from('user_profiles')
         .select('*')
         .order('created_at', { ascending: true });
 
-      if (error || !users || !profile) {
+      if (error || !users) {
         setLoading(false);
         return;
       }
 
+      // Find admin
+      const admin = users.find(u => u.role === 'ADMIN') || profile;
+
+      // Build tree
       const buildTree = (user: any): any => {
         let children = users.filter(u => u.parent_user_id === user.id);
+        
+        // Special case: In some schemas, Team Leaders are assigned to Senior TL via senior_tl_id 
+        // and Associates via assigned_tl_id or team_leader_id. 
+        // We will check parent_user_id first.
         if (children.length === 0) {
           if (user.role === 'SENIOR_TL') {
             children = users.filter(u => u.senior_tl_id === user.id && u.role === 'TEAM_LEADER');
           } else if (user.role === 'TEAM_LEADER') {
+            // Check if associates have parent_user_id or assigned_tl_id
             children = users.filter(u => u.parent_user_id === user.id && u.role === 'ASSOCIATE');
           }
         }
+
         return {
           ...user,
           children: children.map(buildTree)
         };
       };
 
-      const root = users.find(u => u.id === profile.id);
-      if (root) {
-        setTree(buildTree(root));
-      }
+      setTree(buildTree(admin));
       setLoading(false);
     };
 
-    if (profile) {
-      fetchHierarchy();
-    }
+    fetchHierarchy();
   }, [profile]);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-xl font-serif text-brand-deep-navy">My Team</h2>
-          <p className="text-sm text-brand-charcoal/70 mt-1">
-            You are: <span className="font-medium text-brand-architectural-blue">{formatUser(profile?.user_code, profile?.full_name)}</span> <br/>
-            Reports To: <span className="font-medium">Admin</span>
-          </p>
-        </div>
+        <h2 className="text-xl font-serif text-brand-deep-navy">My Team</h2>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-brand-soft-grey p-8 overflow-x-auto">

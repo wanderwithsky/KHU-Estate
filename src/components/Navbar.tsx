@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileJoinOpen, setIsMobileJoinOpen] = useState(false);
   const location = useLocation();
 
   // Close mobile menu when route changes
@@ -48,22 +49,41 @@ export default function Navbar() {
             >
               Join
             </button>
-            {/* The Dropdown Container with a hover-safe bridge area (pt-3) */}
-            <div className="absolute right-0 top-full pt-3 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 ease-out -translate-y-1.5 group-hover:translate-y-0">
+            {/* The Dropdown Container with a hover-safe bridge area (pt-2) */}
+            <div className="absolute right-0 top-full pt-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 ease-out -translate-y-2 group-hover:translate-y-0">
               {/* Premium Floating Panel */}
-              <div className="bg-white border border-brand-soft-grey/60 shadow-[0_8px_24px_rgba(0,0,0,0.06)] rounded-lg p-2 min-w-[220px]">
+              <div className="bg-white/95 backdrop-blur-md border border-brand-charcoal/10 shadow-[0_12px_40px_rgba(0,0,0,0.08)] rounded-xl p-2.5 min-w-[260px] flex flex-col gap-1">
+                
                 <Link 
                   to="/join/associate" 
-                  className="group/link flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-brand-off-white transition-all duration-200 focus:outline-none focus:bg-brand-off-white"
+                  className="group/link flex items-center px-4 py-3 rounded-lg hover:bg-brand-off-white transition-all duration-200 focus:outline-none"
                   role="menuitem"
                 >
-                  <span className="font-semibold text-black text-[15px] transform transition-transform duration-200 group-hover/link:translate-x-0.5">
-                    Join as an Associate
-                  </span>
-                  <span className="text-black/40 group-hover/link:text-black transform transition-transform duration-200 group-hover/link:translate-x-1">
-                    →
+                  <span className="font-medium text-brand-deep-navy text-[15px] transform transition-transform duration-300 group-hover/link:translate-x-1.5">
+                    As a Associate
                   </span>
                 </Link>
+
+                <Link 
+                  to="/join/team-leader" 
+                  className="group/link flex items-center px-4 py-3 rounded-lg hover:bg-brand-off-white transition-all duration-200 focus:outline-none"
+                  role="menuitem"
+                >
+                  <span className="font-medium text-brand-deep-navy text-[15px] transform transition-transform duration-300 group-hover/link:translate-x-1.5">
+                    As a Team Leader
+                  </span>
+                </Link>
+
+                <Link 
+                  to="/join/senior-team-leader" 
+                  className="group/link flex items-center px-4 py-3 rounded-lg hover:bg-brand-off-white transition-all duration-200 focus:outline-none"
+                  role="menuitem"
+                >
+                  <span className="font-medium text-brand-deep-navy text-[15px] transform transition-transform duration-300 group-hover/link:translate-x-1.5">
+                    As a Senior Team Leader
+                  </span>
+                </Link>
+
               </div>
             </div>
           </div>
@@ -108,13 +128,36 @@ export default function Navbar() {
           
           <div className={`pt-8 border-t border-brand-soft-grey transform transition-all duration-700 delay-500 ${isMobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
             <span className="text-xs tracking-widest uppercase text-brand-charcoal/60 mb-4 block">Careers</span>
-            <Link 
-              to="/join/associate"
-              className="inline-flex items-center justify-between w-full bg-brand-deep-navy text-white px-6 py-4 rounded-md uppercase tracking-widest text-sm font-medium active:bg-brand-architectural-blue transition-colors"
+            <button 
+              onClick={() => setIsMobileJoinOpen(!isMobileJoinOpen)}
+              className="flex items-center justify-between w-full bg-brand-deep-navy text-white px-6 py-4 rounded-md uppercase tracking-widest text-sm font-medium transition-colors focus:outline-none"
             >
-              <span>Join as an Associate</span>
-              <span>→</span>
-            </Link>
+              <span>Join</span>
+              <span className={`transform transition-transform duration-300 ${isMobileJoinOpen ? 'rotate-180' : ''}`}>↓</span>
+            </button>
+            
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isMobileJoinOpen ? 'max-h-64 opacity-100 mt-3' : 'max-h-0 opacity-0 mt-0'}`}>
+              <div className="bg-brand-off-white/80 backdrop-blur-md rounded-lg p-2 flex flex-col gap-1 border border-brand-charcoal/10 shadow-sm">
+                <Link 
+                  to="/join/associate"
+                  className="block px-4 py-3 rounded-md text-brand-deep-navy text-[15px] font-medium active:bg-brand-soft-grey transition-colors"
+                >
+                  As a Associate
+                </Link>
+                <Link 
+                  to="/join/team-leader"
+                  className="block px-4 py-3 rounded-md text-brand-deep-navy text-[15px] font-medium active:bg-brand-soft-grey transition-colors"
+                >
+                  As a Team Leader
+                </Link>
+                <Link 
+                  to="/join/senior-team-leader"
+                  className="block px-4 py-3 rounded-md text-brand-deep-navy text-[15px] font-medium active:bg-brand-soft-grey transition-colors"
+                >
+                  As a Senior Team Leader
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>

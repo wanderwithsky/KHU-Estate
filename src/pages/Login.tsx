@@ -13,12 +13,29 @@ export default function Login() {
 
   // Redirect if already logged in and profile is loaded
   useEffect(() => {
-    if (session && profile) {
-      if (profile.role === 'ADMIN') navigate('/admin');
-      else if (profile.role === 'SENIOR_TL') navigate('/senior-team-leader');
-      else if (profile.role === 'TEAM_LEADER') navigate('/team-leader');
-      else if (profile.role === 'ASSOCIATE') navigate('/associate');
-      else navigate('/');
+    if (session) {
+      if (profile === null) {
+        // We have a session but no profile (it could be loading or missing).
+        // Let's assume if it is explicitly missing, we handle it. 
+        // AuthContext sets profile to null initially, and sets it to data if found.
+        // It might be better to handle this in handleLogin after awaiting auth.
+      } else {
+        if (profile.status !== 'ACTIVE') {
+          // Handled inside handleLogin now, but just in case:
+          return;
+        }
+
+        if (profile.must_change_password) {
+          navigate('/change-password');
+          return;
+        }
+
+        if (profile.role === 'ADMIN') navigate('/admin');
+        else if (profile.role === 'SENIOR_TL') navigate('/senior-team-leader');
+        else if (profile.role === 'TEAM_LEADER') navigate('/team-leader');
+        else if (profile.role === 'ASSOCIATE') navigate('/associate');
+        else navigate('/');
+      }
     }
   }, [session, profile, navigate]);
 
@@ -28,7 +45,7 @@ export default function Login() {
     setError('');
 
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { error: authError, data: authData } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -37,6 +54,23 @@ export default function Login() {
         throw new Error(authError.message);
       }
       
+      if (authData?.user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('auth_user_id', authData.user.id)
+          .single();
+
+        if (profileError || !profileData) {
+          await supabase.auth.signOut();
+          throw new Error('Your account profile could not be found. Please contact the administrator.');
+        }
+
+        if (profileData.status !== 'ACTIVE') {
+          await supabase.auth.signOut();
+          throw new Error('Your account is currently inactive. Please contact the administrator.');
+        }
+      }
       // Note: The AuthContext onAuthStateChange will automatically pick up the session,
       // fetch the profile, and then the useEffect above will trigger the redirect.
     } catch (err: any) {

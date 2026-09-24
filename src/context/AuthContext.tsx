@@ -14,6 +14,8 @@ interface UserProfile {
   parent_user_id?: string;
   senior_tl_id?: string;
   team_id?: string;
+  mobile?: string;
+  created_at: string;
 }
 
 // Track current session ID so we can close it on logout

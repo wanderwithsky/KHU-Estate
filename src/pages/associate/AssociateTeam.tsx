@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
-import HierarchyNode from '../../components/HierarchyNode';
 import { formatUser } from '../../utils/formatUser';
+import HierarchyNode from '../../components/HierarchyNode';
 
-export default function SeniorTLTeam() {
+export default function AssociateTeam() {
   const { profile } = useCurrentUser();
   const [tree, setTree] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -12,36 +12,39 @@ export default function SeniorTLTeam() {
   useEffect(() => {
     const fetchHierarchy = async () => {
       setLoading(true);
-      // RLS should handle what is visible, but we can fetch everything available
-      const { data: users, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .order('created_at', { ascending: true });
+      
+      let tl = null;
+      let stl = null;
 
-      if (error || !users || !profile) {
-        setLoading(false);
-        return;
+      if (profile?.parent_user_id) {
+        const { data } = await supabase.from('user_profiles').select('*').eq('id', profile.parent_user_id).single();
+        tl = data;
       }
 
-      const buildTree = (user: any): any => {
-        let children = users.filter(u => u.parent_user_id === user.id);
-        if (children.length === 0) {
-          if (user.role === 'SENIOR_TL') {
-            children = users.filter(u => u.senior_tl_id === user.id && u.role === 'TEAM_LEADER');
-          } else if (user.role === 'TEAM_LEADER') {
-            children = users.filter(u => u.parent_user_id === user.id && u.role === 'ASSOCIATE');
-          }
+      if (profile?.senior_tl_id || tl?.parent_user_id) {
+        const targetId = profile?.senior_tl_id || tl?.parent_user_id;
+        if (targetId) {
+          const { data } = await supabase.from('user_profiles').select('*').eq('id', targetId).single();
+          stl = data;
         }
-        return {
-          ...user,
-          children: children.map(buildTree)
-        };
-      };
-
-      const root = users.find(u => u.id === profile.id);
-      if (root) {
-        setTree(buildTree(root));
       }
+
+      // Build the upward tree manually
+      const meNode = { ...profile, children: [] };
+      
+      if (tl) {
+        const tlNode = { ...tl, children: [meNode] };
+        if (stl) {
+          setTree({ ...stl, children: [tlNode] });
+        } else {
+          setTree(tlNode);
+        }
+      } else if (stl) {
+        setTree({ ...stl, children: [meNode] });
+      } else {
+        setTree(meNode);
+      }
+
       setLoading(false);
     };
 
@@ -56,8 +59,7 @@ export default function SeniorTLTeam() {
         <div>
           <h2 className="text-xl font-serif text-brand-deep-navy">My Team</h2>
           <p className="text-sm text-brand-charcoal/70 mt-1">
-            You are: <span className="font-medium text-brand-architectural-blue">{formatUser(profile?.user_code, profile?.full_name)}</span> <br/>
-            Reports To: <span className="font-medium">Admin</span>
+            You are: <span className="font-medium text-brand-architectural-blue">{formatUser(profile?.user_code, profile?.full_name)}</span>
           </p>
         </div>
       </div>

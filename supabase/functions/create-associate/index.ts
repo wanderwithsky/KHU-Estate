@@ -38,8 +38,8 @@ serve(async (req) => {
     }
 
     // 3. Parse request
-    const { applicationId, fullName, email } = await req.json()
-    if (!applicationId || !email) throw new Error('Missing required fields')
+    const { applicationId } = await req.json()
+    if (!applicationId) throw new Error('Missing applicationId')
 
     // 4. Verify Application Ownership & Status
     const { data: application, error: applicationError } = await supabaseClient
@@ -64,7 +64,7 @@ serve(async (req) => {
 
     // 6. Create Auth Identity
     const { data: newAuthUser, error: createAuthError } = await supabaseClient.auth.admin.createUser({
-      email: email,
+      email: application.email,
       password: tempPassword,
       email_confirm: true
     })
@@ -93,8 +93,8 @@ serve(async (req) => {
         auth_user_id: newAuthUser.user.id,
         user_code: userCode,
         role: 'ASSOCIATE',
-        full_name: fullName || application.full_name,
-        email: email,
+        full_name: application.full_name,
+        email: application.email,
         mobile: application.phone,
         city: application.city,
         parent_user_id: tlParentId,
@@ -135,12 +135,12 @@ serve(async (req) => {
       actor_user_id: profile.id,
       action: 'CREATED_ASSOCIATE',
       module: 'USERS',
-      new_value: { userCode, email, role: 'ASSOCIATE' }
+      new_value: { userCode, email: application.email, role: 'ASSOCIATE' }
     })
 
     // 12. Create Email Log (Stub for actual email sending logic)
     await supabaseClient.from('email_logs').insert({
-        recipient_email: email,
+        recipient_email: application.email,
         template_name: 'ASSOCIATE_WELCOME_CREDENTIALS',
         subject: 'Welcome to KHU Estate - Your Associate Credentials',
         status: 'QUEUED',

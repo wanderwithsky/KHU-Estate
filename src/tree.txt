@@ -1,0 +1,56 @@
+C:\Users\wanderwithsky\Downloads\KHU\src
+├── App.css
+├── App.tsx
+├── assets
+|  ├── hero.png
+|  ├── react.svg
+|  └── vite.svg
+├── components
+|  ├── AdminLayout.tsx
+|  ├── AssociateLayout.tsx
+|  ├── Footer.tsx
+|  ├── Navbar.tsx
+|  ├── SeniorTLLayout.tsx
+|  └── TeamLeaderLayout.tsx
+├── context
+|  └── AuthContext.tsx
+├── data
+|  └── projects.ts
+├── hooks
+|  ├── useCurrentUser.ts
+|  └── useHeartbeat.ts
+├── index.css
+├── layouts
+|  └── Layout.tsx
+├── lib
+|  └── supabase.ts
+├── main.tsx
+├── pages
+|  ├── About.tsx
+|  ├── admin
+|  |  ├── AdminApplications.tsx
+|  |  └── AdminUsers.tsx
+|  ├── AdminDashboard.tsx
+|  ├── associate
+|  |  └── AssociateDashboard.tsx
+|  ├── ChangePassword.tsx
+|  ├── Contact.tsx
+|  ├── Home.tsx
+|  ├── JoinTeam.tsx
+|  ├── Login.tsx
+|  ├── ProjectDetails.tsx
+|  ├── Projects.tsx
+|  ├── senior-tl
+|  |  ├── SeniorTLDashboard.tsx
+|  |  └── SeniorTLTeam.tsx
+|  ├── Services.tsx
+|  └── team-leader
+|     └── TeamLeaderDashboard.tsx
+└── sections
+   ├── BrandIntro.tsx
+   ├── FeaturedProject.tsx
+   ├── Hero.tsx
+   └── WhyKhu.tsx
+
+directory: 13 file: 39
+

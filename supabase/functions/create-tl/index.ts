@@ -36,25 +36,53 @@ serve(async (req) => {
     }
 
     // 3. Parse Request
-    const { fullName, email, mobile, address, joiningDate, targetStlId } = await req.json()
-    if (!fullName || !email) throw new Error('Missing required fields')
+    const body = await req.json()
+    const { applicationId, fullName, email, mobile, address } = body
 
-    const assignedStlId = profile.role === 'ADMIN' ? targetStlId : profile.id
+    let finalFullName = fullName
+    let finalEmail = email
+    let finalMobile = mobile
+    let finalAddress = address
+    let assignedStlId = profile.id
+
+    if (applicationId) {
+      // 4. Fetch Application
+      const { data: app, error: appError } = await supabaseClient
+        .from('associate_applications')
+        .select('*')
+        .eq('id', applicationId)
+        .single()
+
+      if (appError || !app) throw new Error('Application not found')
+      if (app.status === 'ACCOUNT_CREATED') throw new Error('Account already created for this application')
+      if (app.role_applied_for !== 'Team Leader') throw new Error('Application is not for a Team Leader role')
+      
+      finalFullName = app.full_name
+      finalEmail = app.email
+      finalMobile = app.phone
+      finalAddress = app.city
+      assignedStlId = profile.role === 'ADMIN' ? (app.assigned_stl_id || profile.id) : profile.id
+    } else {
+      if (!finalFullName || !finalEmail) {
+        throw new Error('Missing required fields for direct creation')
+      }
+    }
+    
     if (!assignedStlId) throw new Error('Missing Senior TL ID assignment')
 
-    // 4. Generate Temporary Password
+    // 5. Generate Temporary Password
     const tempPassword = crypto.randomUUID().slice(0, 12) + "Khu1!"
 
-    // 5. Create Supabase Auth User
+    // 6. Create Supabase Auth User
     const { data: newAuthUser, error: createAuthError } = await supabaseClient.auth.admin.createUser({
-      email: email,
+      email: finalEmail,
       password: tempPassword,
       email_confirm: true
     })
 
     if (createAuthError) throw new Error(createAuthError.message)
 
-    // 6. Generate TL Code (e.g. TL001)
+    // 7. Generate TL Code (e.g. TL001)
     const { count } = await supabaseClient
       .from('user_profiles')
       .select('*', { count: 'exact', head: true })
@@ -62,18 +90,18 @@ serve(async (req) => {
     
     const userCode = `TL${String((count || 0) + 1).padStart(3, '0')}`
 
-    // 7. Insert User Profile
+    // 8. Insert User Profile
     const { error: insertProfileError } = await supabaseClient
       .from('user_profiles')
       .insert({
         auth_user_id: newAuthUser.user.id,
         user_code: userCode,
         role: 'TEAM_LEADER',
-        full_name: fullName,
-        email: email,
-        mobile: mobile,
-        address: address,
-        joining_date: joiningDate || new Date().toISOString(),
+        full_name: finalFullName,
+        email: finalEmail,
+        mobile: finalMobile,
+        address: finalAddress,
+        joining_date: new Date().toISOString(),
         parent_user_id: assignedStlId, // STL is the parent
         senior_tl_id: assignedStlId,
         status: 'ACTIVE',
@@ -85,12 +113,40 @@ serve(async (req) => {
       throw new Error(insertProfileError.message)
     }
 
-    // 8. Create Audit Log
+    // 9. Update Application Status (if applicable)
+    if (applicationId) {
+      await supabaseClient
+        .from('associate_applications')
+        .update({
+          status: 'ACCOUNT_CREATED',
+          approved_at: new Date().toISOString(),
+          created_account_user_id: newAuthUser.user.id,
+          reviewed_by: profile.id
+        })
+        .eq('id', applicationId)
+        
+      await supabaseClient.from('application_history').insert({
+        application_id: applicationId,
+        status: 'ACCOUNT_CREATED',
+        actor_user_id: profile.id,
+        notes: `Account created directly. User code: ${userCode}`
+      })
+    }
+
+    // 10. Create Audit Log
     await supabaseClient.from('audit_logs').insert({
       actor_user_id: profile.id,
       action: 'CREATED_TEAM_LEADER',
       module: 'USERS',
-      new_value: { userCode, email, role: 'TEAM_LEADER' }
+      new_value: { userCode, email: finalEmail, role: 'TEAM_LEADER', source: applicationId ? 'application' : 'direct' }
+    })
+    
+    // 11. Create Email Log (for future integration)
+    await supabaseClient.from('email_logs').insert({
+      recipient_email: finalEmail,
+      email_type: 'WELCOME_CREDENTIALS',
+      status: 'PENDING',
+      metadata: { role: 'TEAM_LEADER', userCode }
     })
 
     return new Response(

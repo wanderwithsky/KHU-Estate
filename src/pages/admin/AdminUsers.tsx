@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { formatUser } from '../../utils/formatUser';
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +26,10 @@ export default function AdminUsers() {
     setLoading(true);
     const { data } = await supabase
       .from('user_profiles')
-      .select('*')
+      .select(`
+        *,
+        parent:parent_user_id ( full_name, user_code )
+      `)
       .order('created_at', { ascending: false });
     
     if (data) setUsers(data);
@@ -44,7 +48,14 @@ export default function AdminUsers() {
       });
 
       if (invokeError) {
-        throw new Error(invokeError.message || 'Failed to create Senior TL');
+        let errMessage = invokeError.message;
+        if (invokeError.context && typeof invokeError.context.json === 'function') {
+          try {
+            const errData = await invokeError.context.json();
+            errMessage = errData.error || errData.message || errMessage;
+          } catch(e) {}
+        }
+        throw new Error(errMessage || 'Failed to create Senior TL');
       }
 
       setSuccess(`Success! Code: ${data.userCode}, Temp Password: ${data.tempPassword}`);
@@ -78,6 +89,7 @@ export default function AdminUsers() {
               <th className="px-6 py-4 font-medium">Role</th>
               <th className="px-6 py-4 font-medium">Status</th>
               <th className="px-6 py-4 font-medium">Joined</th>
+              <th className="px-6 py-4 font-medium">Reports To</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-brand-soft-grey">
@@ -90,7 +102,7 @@ export default function AdminUsers() {
                 <tr key={user.id} className="hover:bg-brand-warm-white/50 transition-colors">
                   <td className="px-6 py-4 font-medium text-brand-architectural-blue">{user.user_code}</td>
                   <td className="px-6 py-4">
-                    <div>{user.full_name}</div>
+                    <div>{formatUser(user.user_code, user.full_name)}</div>
                     <div className="text-xs text-brand-charcoal/60">{user.email}</div>
                   </td>
                   <td className="px-6 py-4">{user.role.replace('_', ' ')}</td>
@@ -100,6 +112,9 @@ export default function AdminUsers() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-brand-charcoal/60">{new Date(user.joining_date).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 text-brand-charcoal/60">
+                    {user.parent ? formatUser(user.parent.user_code, user.parent.full_name) : (user.role === 'ADMIN' ? '-' : 'Admin')}
+                  </td>
                 </tr>
               ))
             )}
