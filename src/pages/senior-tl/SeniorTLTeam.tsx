@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../context/AuthContext';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 
 export default function SeniorTLTeam() {
-  const { session } = useAuth();
   const { profile } = useCurrentUser();
   const [teamLeaders, setTeamLeaders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,11 +25,12 @@ export default function SeniorTLTeam() {
   }, [profile]);
 
   const fetchTeamLeaders = async () => {
+    if (!profile?.id) return;
     setLoading(true);
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('user_profiles')
       .select('*')
-      .eq('senior_tl_id', profile?.id)
+      .eq('senior_tl_id', profile.id)
       .eq('role', 'TEAM_LEADER')
       .order('created_at', { ascending: false });
     

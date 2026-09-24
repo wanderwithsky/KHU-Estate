@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../context/AuthContext';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 
 export default function TeamLeaderDashboard() {
-  const { session } = useAuth();
   const { profile } = useCurrentUser();
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,11 +23,12 @@ export default function TeamLeaderDashboard() {
   }, [profile]);
 
   const fetchApplications = async () => {
+    if (!profile?.id) return;
     setLoading(true);
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('associate_applications')
       .select('*')
-      .eq('assigned_tl_id', profile?.id)
+      .eq('assigned_tl_id', profile.id)
       .in('status', ['PENDING_TL_REVIEW']) // TL only needs to see their pending apps here
       .order('created_at', { ascending: false });
     

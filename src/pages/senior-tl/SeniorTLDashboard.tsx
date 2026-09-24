@@ -10,6 +10,8 @@ export default function SeniorTLDashboard() {
     if (!profile) return;
     
     async function fetchStats() {
+      if (!profile?.id) return;
+
       const { count: tlsCount } = await supabase
         .from('user_profiles')
         .select('*', { count: 'exact', head: true })
