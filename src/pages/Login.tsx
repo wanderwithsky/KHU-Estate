@@ -71,7 +71,10 @@ export default function Login() {
           throw new Error('Your account profile could not be found. Please contact the administrator.');
         }
 
-        if (profileData.status !== 'ACTIVE') {
+        if (profileData.status === 'SUSPENDED') {
+          await supabase.auth.signOut();
+          throw new Error('Your account is currently suspended. Please contact the administrator.');
+        } else if (profileData.status !== 'ACTIVE') {
           await supabase.auth.signOut();
           throw new Error('Your account is currently inactive. Please contact the administrator.');
         }

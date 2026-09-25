@@ -21,6 +21,9 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminApplications from './pages/admin/AdminApplications';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminTeam from './pages/admin/AdminTeam';
+import AdminSeniorTeamLeaders from './pages/admin/AdminSeniorTeamLeaders';
+import AdminTeamLeaders from './pages/admin/AdminTeamLeaders';
+import AdminAssociates from './pages/admin/AdminAssociates';
 
 // Senior TL
 import SeniorTLDashboard from './pages/senior-tl/SeniorTLDashboard';
@@ -51,6 +54,10 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode,
     return <div className="p-8 text-center mt-24">Please <a href="/login" className="text-brand-architectural-blue underline">login</a> to view this page.</div>;
   }
   
+  if (profile && profile.status === 'SUSPENDED') {
+    return <div className="p-8 text-center mt-24 text-red-600">Your account is currently suspended. Please contact the administrator.</div>;
+  }
+
   if (profile && !allowedRoles.includes(profile.role)) {
     return <div className="p-8 text-center mt-24 text-red-600">Access Denied: You do not have permission to view this page.</div>;
   }
@@ -95,9 +102,9 @@ function App() {
             {/* Hierarchy */}
             <Route path="users" element={<AdminUsers />} />
             <Route path="team" element={<AdminTeam />} />
-            <Route path="senior-team-leaders" element={<FeatureShell title="Senior Team Leaders" />} />
-            <Route path="team-leaders" element={<FeatureShell title="Team Leaders" />} />
-            <Route path="associates" element={<FeatureShell title="Associates" />} />
+            <Route path="senior-team-leaders" element={<AdminSeniorTeamLeaders />} />
+            <Route path="team-leaders" element={<AdminTeamLeaders />} />
+            <Route path="associates" element={<AdminAssociates />} />
             {/* Business */}
             <Route path="business" element={<FeatureShell title="Total Business" />} />
             <Route path="leads" element={<FeatureShell title="Leads" />} />
