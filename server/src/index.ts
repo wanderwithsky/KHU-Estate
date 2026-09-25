@@ -17,7 +17,7 @@ app.use(express.json());
 
 // Basic health check
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'KHU Estate API is running' });
+  res.status(200).json({ status: 'ok', message: 'KHU Developers API is running' });
 });
 
 // Import routes

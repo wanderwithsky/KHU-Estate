@@ -142,7 +142,7 @@ serve(async (req) => {
     await supabaseClient.from('email_logs').insert({
         recipient_email: application.email,
         template_name: 'ASSOCIATE_WELCOME_CREDENTIALS',
-        subject: 'Welcome to KHU Estate - Your Associate Credentials',
+        subject: 'Welcome to KHU Developers - Your Associate Credentials',
         status: 'QUEUED',
         metadata: { userCode, tempPassword }
     })

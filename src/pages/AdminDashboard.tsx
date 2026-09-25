@@ -109,7 +109,7 @@ export default function AdminDashboard() {
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
       <div className="mb-8">
         <h2 className="text-2xl font-serif text-brand-deep-navy mb-1">Global Dashboard</h2>
-        <p className="text-sm text-brand-charcoal/70">Overview of the entire KHU Estate platform.</p>
+        <p className="text-sm text-brand-charcoal/70">Overview of the entire KHU Developers platform.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

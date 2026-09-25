@@ -48,7 +48,7 @@ export default function About() {
             className="max-w-4xl"
           >
             <motion.p variants={fadeIn} className="text-white/80 text-xs md:text-sm tracking-[0.2em] uppercase font-medium mb-6">
-              About KHU Estate
+              About KHU Developers
             </motion.p>
             <motion.h1 variants={fadeIn} className="text-4xl md:text-6xl lg:text-7xl font-serif text-white leading-[1.1] mb-8">
               Building Spaces.<br />
@@ -267,7 +267,7 @@ export default function About() {
         </div>
       </section>
 
-      {/* 07. WHY KHU ESTATE */}
+      {/* 07. WHY KHU DEVELOPERS */}
       <section className="py-24 md:py-32 bg-white">
         <div className="container mx-auto px-6 md:px-12">
           <motion.div 
@@ -278,7 +278,7 @@ export default function About() {
             className="max-w-3xl mb-16"
           >
             <motion.p variants={fadeIn} className="text-brand-charcoal/50 text-xs tracking-[0.2em] uppercase font-medium mb-6">
-              Why KHU Estate
+              Why KHU Developers
             </motion.p>
             <motion.h2 variants={fadeIn} className="text-3xl md:text-5xl font-serif text-brand-deep-navy leading-[1.2]">
               A Local Perspective on Real Estate.
@@ -360,7 +360,7 @@ export default function About() {
               Let's Build What Comes Next.
             </motion.h2>
             <motion.p variants={fadeIn} className="text-white/70 font-light text-lg mb-10">
-              Explore our projects or speak with the KHU Estate team to learn more.
+              Explore our projects or speak with the KHU Developers team to learn more.
             </motion.p>
             
             <motion.div variants={fadeIn} className="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full sm:w-auto">

@@ -12,7 +12,7 @@ export default function FeatureShell({ title }: { title?: string }) {
       </div>
       <h2 className="text-2xl font-serif text-brand-deep-navy mb-3">{displayTitle}</h2>
       <p className="text-brand-charcoal/70 mb-8">
-        This module is part of the KHU Estate roadmap. The user interface shell has been created, but it is currently awaiting the implementation of supporting backend database tables and APIs.
+        This module is part of the KHU Developers roadmap. The user interface shell has been created, but it is currently awaiting the implementation of supporting backend database tables and APIs.
       </p>
       <div className="bg-brand-off-white border border-brand-soft-grey rounded p-4 text-xs font-mono text-brand-charcoal/60 w-full text-left">
         <strong>Dependency:</strong> Backend Supabase integration required for {location.pathname}.

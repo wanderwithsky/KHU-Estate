@@ -28,10 +28,10 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 lg:px-12 flex justify-between items-center h-[60px]">
         <Link to="/" className="flex items-center gap-3 relative z-50">
           {/* Replace src with actual logo file path when provided */}
-          <img src="/logo.png" alt="KHU Estate Logo" className="h-[40px] w-auto object-contain" onError={(e) => {
+          <img src="/logo.png" alt="KHU Developers Logo" className="h-[40px] w-auto object-contain" onError={(e) => {
             e.currentTarget.style.display = 'none';
           }} />
-          <span className="text-xl font-medium tracking-tight font-serif text-black">KHU ESTATE</span>
+          <span className="text-xl font-medium tracking-tight font-serif text-black">KHU DEVELOPERS</span>
         </Link>
         
         {/* Desktop Menu */}

@@ -206,7 +206,7 @@ export default function DashboardLayout() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-brand-deep-navy text-white/90">
       <div className="p-6 pb-2">
-        <h2 className="text-xl font-serif tracking-widest text-white">KHU ESTATE</h2>
+        <h2 className="text-xl font-serif tracking-widest text-white">KHU DEVELOPERS</h2>
         <p className="text-[10px] text-brand-gold uppercase tracking-[0.2em] mt-1 font-medium">{roleTitle}</p>
       </div>
       
@@ -298,7 +298,7 @@ export default function DashboardLayout() {
               {menuConfig.flatMap(s => s.items).find(i => i.path === location.pathname)?.name || 'Dashboard'}
             </h1>
             <h1 className="text-lg font-serif text-brand-deep-navy lg:hidden">
-              KHU ESTATE
+              KHU DEVELOPERS
             </h1>
           </div>
           

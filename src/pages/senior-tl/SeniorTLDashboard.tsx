@@ -292,7 +292,7 @@ export default function SeniorTLDashboard() {
           <Target className="text-brand-architectural-blue/30 mb-4" size={48} />
           <h2 className="text-xl font-serif text-brand-deep-navy mb-2">Team Performance Tracking</h2>
           <p className="text-brand-charcoal/70 max-w-md">
-            Performance metrics and leaderboards will appear here once the business transaction modules are fully integrated into KHU Estate.
+            Performance metrics and leaderboards will appear here once the business transaction modules are fully integrated into KHU Developers.
           </p>
         </div>
 

@@ -133,10 +133,10 @@ export default function JoinTeam() {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-brand-deep-navy tracking-tight mb-8 leading-tight">
             BUILD YOUR<br />
             PROPERTY CAREER<br />
-            WITH KHU ESTATE.
+            WITH KHU DEVELOPERS.
           </h1>
           <p className="text-lg text-brand-charcoal font-light max-w-lg leading-relaxed mb-12">
-            Join KHU Estate and build meaningful opportunities in real estate, leadership, and business development.
+            Join KHU Developers and build meaningful opportunities in real estate, leadership, and business development.
           </p>
 
           <div className="space-y-6">
@@ -313,7 +313,7 @@ export default function JoinTeam() {
                     value={formData.message}
                     onChange={(e) => setFormData({...formData, message: e.target.value})}
                     className="w-full border border-brand-soft-grey bg-brand-off-white px-4 py-3.5 rounded-lg focus:outline-none focus:border-brand-architectural-blue focus:bg-white transition-colors resize-none text-sm leading-relaxed" 
-                    placeholder="Tell us about your background, experience, or why you'd like to join KHU Estate..."
+                    placeholder="Tell us about your background, experience, or why you'd like to join KHU Developers..."
                   />
                 </div>
                 

@@ -17,7 +17,7 @@ export default function SeniorTLLayout() {
       {/* Sidebar */}
       <aside className="w-64 bg-brand-charcoal text-white flex flex-col">
         <div className="p-6 border-b border-white/10">
-          <h2 className="text-xl font-serif tracking-tight">KHU ESTATE</h2>
+          <h2 className="text-xl font-serif tracking-tight">KHU DEVELOPERS</h2>
           <p className="text-xs text-white/50 uppercase tracking-widest mt-1">Senior TL Portal</p>
         </div>
         <nav className="flex-1 p-4 space-y-2">
