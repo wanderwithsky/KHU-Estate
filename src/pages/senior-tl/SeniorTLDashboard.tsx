@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { formatUser } from '../../utils/formatUser';
 import { Users, FileText, Briefcase, MapPin, Award, Target } from 'lucide-react';
+import MyBusiness from '../shared/MyBusiness';
 
 export default function SeniorTLDashboard() {
   const { profile } = useCurrentUser();
@@ -294,8 +295,12 @@ export default function SeniorTLDashboard() {
           <p className="text-brand-charcoal/70 max-w-md">
             Performance metrics and leaderboards will appear here once the business transaction modules are fully integrated into KHU Developers.
           </p>
-        </div>
+      </div>
 
+      </div>
+
+      <div className="mt-12">
+        <MyBusiness />
       </div>
 
       {/* Modals */}

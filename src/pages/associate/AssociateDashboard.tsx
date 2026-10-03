@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { formatUser } from '../../utils/formatUser';
 import { Briefcase, BarChart3, MapPin, Award, User, Phone, Mail, ShieldAlert } from 'lucide-react';
+import MyBusiness from '../shared/MyBusiness';
 
 export default function AssociateDashboard() {
   const { profile } = useCurrentUser();
@@ -195,6 +196,10 @@ export default function AssociateDashboard() {
           </div>
         </div>
 
+      </div>
+      
+      <div className="mt-12">
+        <MyBusiness />
       </div>
     </div>
   );

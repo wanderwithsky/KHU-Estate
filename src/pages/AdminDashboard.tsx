@@ -71,7 +71,7 @@ export default function AdminDashboard() {
         // Fetch Recent Activity (Audit logs + application history combined conceptually, using audit logs for now)
         const { data: activity } = await supabase
           .from('audit_logs')
-          .select('*, user_profiles(full_name, role)')
+          .select('*, user_profiles(user_code, full_name, role)')
           .order('created_at', { ascending: false })
           .limit(6);
           

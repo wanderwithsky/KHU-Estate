@@ -24,6 +24,9 @@ import AdminTeam from './pages/admin/AdminTeam';
 import AdminSeniorTeamLeaders from './pages/admin/AdminSeniorTeamLeaders';
 import AdminTeamLeaders from './pages/admin/AdminTeamLeaders';
 import AdminAssociates from './pages/admin/AdminAssociates';
+import AdminVisits from './pages/admin/AdminVisits';
+import AdminBusiness from './pages/admin/AdminBusiness';
+import UserVisits from './pages/shared/UserVisits';
 
 // Senior TL
 import SeniorTLDashboard from './pages/senior-tl/SeniorTLDashboard';
@@ -39,6 +42,7 @@ import Profile from './components/Profile';
 // Associate
 import AssociateDashboard from './pages/associate/AssociateDashboard';
 import AssociateTeam from './pages/associate/AssociateTeam';
+import MyBusiness from './pages/shared/MyBusiness';
 
 // Protected Route wrapper
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles: string[] }) {
@@ -106,10 +110,10 @@ function App() {
             <Route path="team-leaders" element={<AdminTeamLeaders />} />
             <Route path="associates" element={<AdminAssociates />} />
             {/* Business */}
-            <Route path="business" element={<FeatureShell title="Total Business" />} />
+            <Route path="business" element={<AdminBusiness />} />
+          <Route path="visits" element={<AdminVisits />} />
             <Route path="leads" element={<FeatureShell title="Leads" />} />
             <Route path="clients" element={<FeatureShell title="Clients" />} />
-            <Route path="visits" element={<FeatureShell title="Site Visits" />} />
             <Route path="deals" element={<FeatureShell title="Deals / Bookings" />} />
             <Route path="payments" element={<FeatureShell title="Payments" />} />
             <Route path="commissions" element={<FeatureShell title="Commissions" />} />
@@ -148,8 +152,9 @@ function App() {
             <Route path="associate-applications" element={<FeatureShell title="Associate Apps" />} />
             
             <Route path="performance" element={<FeatureShell title="Team Performance" />} />
-            <Route path="business" element={<FeatureShell title="Total Business" />} />
-            <Route path="visits" element={<FeatureShell title="Total Visits" />} />
+            <Route path="business" element={<MyBusiness />} />
+            <Route path="visits" element={<UserVisits />} />
+            <Route path="my-visits" element={<UserVisits />} />
             <Route path="rewards" element={<FeatureShell title="Rewards" />} />
             
             <Route path="reports-income" element={<FeatureShell title="Income Report" />} />
@@ -172,11 +177,12 @@ function App() {
             
             <Route path="leads" element={<FeatureShell title="Leads" />} />
             <Route path="clients" element={<FeatureShell title="Clients" />} />
-            <Route path="business" element={<FeatureShell title="Total Business" />} />
+            <Route path="business" element={<MyBusiness />} />
             <Route path="deals" element={<FeatureShell title="Deals / Bookings" />} />
             
             <Route path="plot-visits" element={<FeatureShell title="Plot Visits" />} />
-            <Route path="visits" element={<FeatureShell title="Total Visits" />} />
+            <Route path="visits" element={<UserVisits />} />
+            <Route path="my-visits" element={<UserVisits />} />
             
             <Route path="targets" element={<FeatureShell title="Targets" />} />
             <Route path="rewards" element={<FeatureShell title="Rewards" />} />
@@ -201,9 +207,9 @@ function App() {
             <Route path="income" element={<FeatureShell title="Income Report" />} />
             <Route path="business" element={<FeatureShell title="Total Business" />} />
             <Route path="rewards" element={<FeatureShell title="Rewards" />} />
-            <Route path="visits" element={<FeatureShell title="Plot Visits" />} />
-            <Route path="my-visits" element={<FeatureShell title="My Visits" />} />
-            <Route path="my-business" element={<FeatureShell title="My Business" />} />
+            <Route path="visits" element={<UserVisits />} />
+            <Route path="my-visits" element={<UserVisits />} />
+            <Route path="my-business" element={<MyBusiness />} />
             <Route path="notifications" element={<FeatureShell title="Notifications" />} />
             <Route path="settings" element={<FeatureShell title="Settings" />} />
           </Route>

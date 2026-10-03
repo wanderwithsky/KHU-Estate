@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { formatUser } from '../../utils/formatUser';
 import { Users, FileText, Briefcase, MapPin, Award, Target } from 'lucide-react';
+import MyBusiness from '../shared/MyBusiness';
 
 export default function TeamLeaderDashboard() {
   const { profile } = useCurrentUser();
@@ -347,6 +348,10 @@ export default function TeamLeaderDashboard() {
           </p>
         </div>
 
+      </div>
+
+      <div className="mt-12">
+        <MyBusiness />
       </div>
 
       {/* APPROVE MODAL */}

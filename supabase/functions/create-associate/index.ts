@@ -71,13 +71,12 @@ serve(async (req) => {
 
     if (createAuthError) throw new Error(createAuthError.message)
 
-    // 7. Generate Associate ID
-    const { count } = await supabaseClient
-      .from('user_profiles')
-      .select('*', { count: 'exact', head: true })
-      .eq('role', 'ASSOCIATE')
-
-    const userCode = `ASSOC${String((count || 0) + 1).padStart(4, '0')}`
+    // 7. Generate Associate Code safely using RPC
+    const { data: userCodeData, error: codeError } = await supabaseClient
+      .rpc('generate_user_code', { role_type: 'ASSOCIATE' })
+      
+    if (codeError) throw new Error(`Failed to generate user code: ${codeError.message}`)
+    const userCode = userCodeData
     
     // If ADMIN approves directly without TL, it remains unassigned. 
     // If TL approves, or Admin approves an assigned one, use the assigned_tl_id or TL's id.

@@ -78,13 +78,12 @@ serve(async (req) => {
 
     if (createAuthError) throw new Error(createAuthError.message)
 
-    // 7. Generate STL Code (e.g. STL001)
-    const { count } = await supabaseClient
-      .from('user_profiles')
-      .select('*', { count: 'exact', head: true })
-      .eq('role', 'SENIOR_TL')
-    
-    const userCode = `STL${String((count || 0) + 1).padStart(3, '0')}`
+    // 7. Generate STL Code safely using RPC
+    const { data: userCodeData, error: codeError } = await supabaseClient
+      .rpc('generate_user_code', { role_type: 'SENIOR_TL' })
+      
+    if (codeError) throw new Error(`Failed to generate user code: ${codeError.message}`)
+    const userCode = userCodeData
 
     // 8. Insert User Profile
     const { error: insertProfileError } = await supabaseClient

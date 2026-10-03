@@ -42,14 +42,7 @@ const ADMIN_MENU: NavSection[] = [
       { name: 'Leads', path: '/admin/leads', icon: Users },
       { name: 'Clients', path: '/admin/clients', icon: Users },
       { name: 'Site Visits', path: '/admin/visits', icon: MapPin },
-      { name: 'Deals / Bookings', path: '/admin/deals', icon: Building },
-      { name: 'Payments', path: '/admin/payments', icon: CreditCard },
       { name: 'Commissions', path: '/admin/commissions', icon: CreditCard },
-  ]},
-  { label: 'Finance', items: [
-      { name: 'Income', path: '/admin/income', icon: BarChart3 },
-      { name: 'Expenses', path: '/admin/expenses', icon: BarChart3 },
-      { name: 'Revenue Reports', path: '/admin/finance-reports', icon: FileText },
   ]},
   { label: 'Performance', items: [
       { name: 'Senior TL Performance', path: '/admin/performance-stl', icon: Activity },
@@ -57,12 +50,6 @@ const ADMIN_MENU: NavSection[] = [
       { name: 'Associate Performance', path: '/admin/performance-associate', icon: Activity },
       { name: 'Targets', path: '/admin/targets', icon: Target },
       { name: 'Rewards', path: '/admin/rewards', icon: Award },
-  ]},
-  { label: 'Reports', items: [
-      { name: 'Business Reports', path: '/admin/reports-business', icon: FileText },
-      { name: 'Income Reports', path: '/admin/reports-income', icon: FileText },
-      { name: 'Visit Reports', path: '/admin/reports-visits', icon: FileText },
-      { name: 'Performance Reports', path: '/admin/reports-performance', icon: FileText },
   ]},
   { label: 'System', items: [
       { name: 'Notifications', path: '/admin/notifications', icon: Bell },
@@ -203,7 +190,7 @@ export default function DashboardLayout() {
       break;
   }
 
-  const SidebarContent = () => (
+  const sidebarContent = (
     <div className="flex flex-col h-full bg-brand-deep-navy text-white/90">
       <div className="p-6 pb-2">
         <h2 className="text-xl font-serif tracking-widest text-white">KHU DEVELOPERS</h2>
@@ -265,7 +252,7 @@ export default function DashboardLayout() {
     <div className="flex h-screen bg-brand-warm-white overflow-hidden font-sans">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block w-64 h-full shadow-2xl z-20 shrink-0 relative">
-        <SidebarContent />
+        {sidebarContent}
       </aside>
 
       {/* Mobile Sidebar Overlay */}
@@ -280,7 +267,7 @@ export default function DashboardLayout() {
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 shadow-2xl lg:hidden transform transition-transform duration-300 ease-in-out ${
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <SidebarContent />
+        {sidebarContent}
       </aside>
 
       {/* Main Content Area */}

@@ -82,13 +82,12 @@ serve(async (req) => {
 
     if (createAuthError) throw new Error(createAuthError.message)
 
-    // 7. Generate TL Code (e.g. TL001)
-    const { count } = await supabaseClient
-      .from('user_profiles')
-      .select('*', { count: 'exact', head: true })
-      .eq('role', 'TEAM_LEADER')
-    
-    const userCode = `TL${String((count || 0) + 1).padStart(3, '0')}`
+    // 7. Generate TL Code safely using RPC
+    const { data: userCodeData, error: codeError } = await supabaseClient
+      .rpc('generate_user_code', { role_type: 'TEAM_LEADER' })
+      
+    if (codeError) throw new Error(`Failed to generate user code: ${codeError.message}`)
+    const userCode = userCodeData
 
     // 8. Insert User Profile
     const { error: insertProfileError } = await supabaseClient
