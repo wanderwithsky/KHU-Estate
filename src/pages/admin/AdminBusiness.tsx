@@ -238,6 +238,39 @@ export default function AdminBusiness() {
       }
       
       if (res.error) throw res.error;
+      const businessData = res.data;
+      
+      // Update or create commission record
+      if (businessData) {
+        const commissionAmount = (businessData.deal_amount * (businessData.commission_percent || 0)) / 100;
+        
+        const { data: existingCommission } = await supabase
+          .from('commissions')
+          .select('id')
+          .eq('business_id', businessData.id)
+          .limit(1)
+          .single();
+          
+        if (existingCommission) {
+           await supabase.from('commissions').update({
+             user_id: businessData.assigned_user_id,
+             role: assignedUserObj?.role || 'ASSOCIATE',
+             commission_percentage: businessData.commission_percent || 0,
+             base_amount: businessData.deal_amount,
+             commission_amount: commissionAmount
+           }).eq('id', existingCommission.id);
+        } else {
+           await supabase.from('commissions').insert({
+             business_id: businessData.id,
+             user_id: businessData.assigned_user_id,
+             role: assignedUserObj?.role || 'ASSOCIATE',
+             commission_percentage: businessData.commission_percent || 0,
+             base_amount: businessData.deal_amount,
+             commission_amount: commissionAmount,
+             status: 'PENDING'
+           });
+        }
+      }
       
       await fetchData(); // Refresh list
       setIsModalOpen(false);

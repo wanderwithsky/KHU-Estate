@@ -25,9 +25,10 @@ interface VisitSpreadsheetProps {
   type: 'MY_VISITS' | 'HISTORY' | 'ADMIN';
   onEdit?: (record: VisitRecord) => void; // Used for "Submit Report" or Admin "Edit"
   onView?: (record: VisitRecord) => void;
+  isAdminScheduled?: boolean;
 }
 
-export default function VisitSpreadsheet({ records, type, onEdit, onView }: VisitSpreadsheetProps) {
+export default function VisitSpreadsheet({ records, type, onEdit, onView, isAdminScheduled }: VisitSpreadsheetProps) {
   const exportCSV = () => {
     let headers: string[] = [];
     
@@ -36,7 +37,8 @@ export default function VisitSpreadsheet({ records, type, onEdit, onView }: Visi
     } else if (type === 'HISTORY') {
       headers = ['Date', 'Customer Name', 'Phone', 'Meet Time', 'Remarks', 'Status', 'Submitted At'];
     } else {
-      headers = ['User Code', 'User Name', 'Role', 'Customer Name', 'Phone', 'Visit Date', 'Meet Time', 'Location', 'Project Name', 'Status', 'Remarks', 'Submitted At'];
+      const userColHeader = isAdminScheduled ? 'Scheduled To' : 'Submitted By';
+      headers = ['User Code', userColHeader, 'Role', 'Customer Name', 'Phone', 'Visit Date', 'Meet Time', 'Location', 'Project Name', 'Status', 'Remarks', 'Submitted At'];
     }
     
     const rows = records.map(r => {
@@ -138,7 +140,7 @@ export default function VisitSpreadsheet({ records, type, onEdit, onView }: Visi
               
               {type === 'ADMIN' && (
                 <>
-                  <th className="p-2.5 border-r border-brand-soft-grey/20">Submitted By</th>
+                  <th className="p-2.5 border-r border-brand-soft-grey/20">{isAdminScheduled ? 'Scheduled To' : 'Submitted By'}</th>
                 </>
               )}
               

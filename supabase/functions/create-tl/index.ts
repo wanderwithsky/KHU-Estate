@@ -70,8 +70,22 @@ serve(async (req) => {
     
     if (!assignedStlId) throw new Error('Missing Senior TL ID assignment')
 
+    // First check if profile already exists for this email
+    const { data: existingProfile } = await supabaseClient
+      .from('user_profiles')
+      .select('id, auth_user_id')
+      .eq('email', finalEmail)
+      .maybeSingle()
+
+    if (existingProfile) {
+        throw new Error('A user with this email address has already been fully registered.')
+    }
+
     // 5. Generate Temporary Password
     const tempPassword = crypto.randomUUID().slice(0, 12) + "Khu1!"
+
+    let authUserId = null;
+    let isRecovery = false;
 
     // 6. Create Supabase Auth User
     const { data: newAuthUser, error: createAuthError } = await supabaseClient.auth.admin.createUser({
@@ -80,7 +94,31 @@ serve(async (req) => {
       email_confirm: true
     })
 
-    if (createAuthError) throw new Error(createAuthError.message)
+    if (createAuthError) {
+        if (createAuthError.message.includes('already registered') || createAuthError.status === 422 || createAuthError.code === 'user_already_exists') {
+            const { data: listData, error: listError } = await supabaseClient.auth.admin.listUsers();
+            if (listError) throw new Error('Failed to retrieve existing auth user');
+            
+            const existingAuthUser = listData.users.find(u => u.email === finalEmail);
+            if (!existingAuthUser) {
+                throw new Error('Email registered but user cannot be found for reconciliation.');
+            }
+            
+            const { error: updateAuthError } = await supabaseClient.auth.admin.updateUserById(
+                existingAuthUser.id,
+                { password: tempPassword, email_confirm: true }
+            );
+            
+            if (updateAuthError) throw new Error(`Failed to update existing auth account: ${updateAuthError.message}`);
+            
+            authUserId = existingAuthUser.id;
+            isRecovery = true;
+        } else {
+            throw new Error(createAuthError.message)
+        }
+    } else {
+        authUserId = newAuthUser.user.id;
+    }
 
     // 7. Generate TL Code safely using RPC
     const { data: userCodeData, error: codeError } = await supabaseClient
@@ -93,7 +131,7 @@ serve(async (req) => {
     const { error: insertProfileError } = await supabaseClient
       .from('user_profiles')
       .insert({
-        auth_user_id: newAuthUser.user.id,
+        auth_user_id: authUserId,
         user_code: userCode,
         role: 'TEAM_LEADER',
         full_name: finalFullName,
@@ -108,7 +146,9 @@ serve(async (req) => {
       })
 
     if (insertProfileError) {
-      await supabaseClient.auth.admin.deleteUser(newAuthUser.user.id)
+      if (!isRecovery) {
+        await supabaseClient.auth.admin.deleteUser(authUserId)
+      }
       throw new Error(insertProfileError.message)
     }
 

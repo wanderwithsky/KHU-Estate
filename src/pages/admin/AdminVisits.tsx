@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Plus, X, Image as ImageIcon } from 'lucide-react';
 import VisitSpreadsheet from '../../components/VisitSpreadsheet';
+import SelfieImage from '../../components/SelfieImage';
 import UserSelector from '../../components/UserSelector';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 
@@ -256,12 +257,13 @@ export default function AdminVisits() {
               <div className="h-20 bg-gray-100 rounded w-full"></div>
             </div>
           ) : (
-            <VisitSpreadsheet 
-              records={activeRecords}
-              type="ADMIN"
-              onEdit={handleOpenModal}
-              onView={handleView}
-            />
+              <VisitSpreadsheet 
+                records={activeRecords}
+                type="ADMIN"
+                onEdit={handleOpenModal}
+                onView={handleView}
+                isAdminScheduled={activeTab === 'SCHEDULED'}
+              />
           )}
         </div>
       </div>
@@ -436,19 +438,11 @@ export default function AdminVisits() {
             {/* Image Section */}
             <div className="md:w-1/2 bg-gray-900 flex items-center justify-center min-h-[300px] p-4 relative">
               {currentRecord.selfie_url ? (
-                <img 
-                  src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/visit-selfies/${currentRecord.selfie_url}`}
-                  alt="Visit Selfie"
-                  className="max-w-full max-h-[80vh] object-contain"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    // If public access fails, it might be private. Try with signed url logic or fallback.
-                    // Assuming for now the storage policy handles viewing. 
-                    // To do it securely for private buckets, we would need to request a signed URL.
-                    // For now, this is a placeholder URL structure, actual auth might be required.
-                    target.src = "https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=400&q=80"; // fallback
-                  }}
-                />
+                <SelfieImage 
+                    selfiePath={currentRecord.selfie_url}
+                    alt="Visit Selfie"
+                    className="max-w-full max-h-[80vh] object-contain"
+                  />
               ) : (
                 <div className="flex flex-col items-center text-gray-500">
                   <ImageIcon size={48} className="mb-2 opacity-50" />
@@ -471,7 +465,7 @@ export default function AdminVisits() {
               
               <div className="p-6 space-y-6">
                 <div>
-                  <h3 className="text-[10px] uppercase tracking-widest text-brand-charcoal/60 mb-1">Submitted By</h3>
+                  <h3 className="text-[10px] uppercase tracking-widest text-brand-charcoal/60 mb-1">{activeTab === 'SCHEDULED' ? 'Scheduled To' : 'Submitted By'}</h3>
                   <div className="bg-brand-primary/5 p-3 rounded border border-brand-soft-grey flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-brand-deep-navy text-white flex items-center justify-center font-medium">
                       {currentRecord.user_profiles?.full_name?.charAt(0) || 'U'}

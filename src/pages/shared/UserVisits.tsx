@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Camera, X, Check, Plus } from 'lucide-react';
 import VisitSpreadsheet from '../../components/VisitSpreadsheet';
+import SelfieImage from '../../components/SelfieImage';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 
 export default function UserVisits() {
-  const { profile } = useCurrentUser();
+  const { profile, authUser } = useCurrentUser();
   const [scheduledRecords, setScheduledRecords] = useState<any[]>([]);
   const [completedRecords, setCompletedRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -199,12 +200,15 @@ export default function UserVisits() {
 
   const uploadSelfie = async (file: File): Promise<string> => {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${profile?.id}-${Date.now()}.${fileExt}`;
+    const fileName = `${authUser?.id}/visit-selfie-${Date.now()}.${fileExt}`;
     const { data, error } = await supabase.storage
       .from('visit-selfies')
       .upload(fileName, file);
       
-    if (error) throw error;
+    if (error) {
+      console.error('Storage error:', error);
+      throw new Error('Unable to upload selfie. Please try again.');
+    }
     return data.path;
   };
 
@@ -253,7 +257,13 @@ export default function UserVisits() {
           .select().single();
       }
       
-      if (res.error) throw res.error;
+      if (res.error) {
+        // Cleanup orphaned selfie file if DB insert fails
+        if (selfieFile && selfiePath && selfiePath !== currentVisit?.selfie_url) {
+          await supabase.storage.from('visit-selfies').remove([selfiePath]);
+        }
+        throw res.error;
+      }
 
       // Audit Log
       await supabase.from('audit_logs').insert({
@@ -434,11 +444,19 @@ export default function UserVisits() {
                   <div className="border-2 border-dashed border-brand-soft-grey rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
                     {selfiePreview || (currentVisit && currentVisit.selfie_url) ? (
                       <div className="flex flex-col items-center">
-                        <img 
-                          src={selfiePreview || `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/visit-selfies/${currentVisit.selfie_url}`} 
-                          alt="Preview" 
-                          className="max-h-48 rounded shadow-sm mb-3" 
-                        />
+                        {selfiePreview ? (
+                            <img 
+                              src={selfiePreview} 
+                              alt="Preview" 
+                              className="max-h-48 rounded shadow-sm mb-3" 
+                            />
+                          ) : (
+                            <SelfieImage 
+                              selfiePath={currentVisit.selfie_url}
+                              alt="Preview"
+                              className="max-h-48 rounded shadow-sm mb-3"
+                            />
+                          )}
                         <div className="flex gap-2">
                           <button type="button" onClick={startCamera} className="text-xs bg-brand-deep-navy text-white px-3 py-1.5 rounded font-medium">Retake Photo</button>
                           <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-brand-charcoal border border-brand-soft-grey bg-white px-3 py-1.5 rounded font-medium">Upload File</button>
@@ -593,11 +611,11 @@ export default function UserVisits() {
               {currentVisit.selfie_url && (
                 <div className="border-t border-brand-soft-grey pt-4">
                   <p className="text-[10px] uppercase tracking-widest text-brand-charcoal/60 mb-2">Selfie</p>
-                  <img 
-                    src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/visit-selfies/${currentVisit.selfie_url}`} 
-                    alt="Selfie" 
-                    className="max-h-64 rounded shadow-sm border border-brand-soft-grey"
-                  />
+                  <SelfieImage 
+                      selfiePath={currentVisit.selfie_url}
+                      alt="Selfie"
+                      className="max-h-64 rounded shadow-sm border border-brand-soft-grey"
+                    />
                 </div>
               )}
               

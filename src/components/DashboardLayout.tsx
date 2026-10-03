@@ -6,7 +6,7 @@ import { formatUser } from '../utils/formatUser';
 import { 
   Menu, LogOut, User, LayoutDashboard, 
   Users, Briefcase, FileText, BarChart3, Settings, Bell,
-  Target, Award, CreditCard, Building, MapPin, Activity, CheckSquare
+  Target, Award, CreditCard, Building, MapPin, Activity
 } from 'lucide-react';
 
 type NavItem = {
@@ -27,9 +27,6 @@ const ADMIN_MENU: NavSection[] = [
   ]},
   { label: 'Applications', items: [
       { name: 'All Applications', path: '/admin/applications', icon: FileText },
-      { name: 'Pending Reviews', path: '/admin/pending-applications', icon: CheckSquare },
-      { name: 'Approved', path: '/admin/approved-applications', icon: CheckSquare },
-      { name: 'Declined', path: '/admin/declined-applications', icon: CheckSquare },
   ]},
   { label: 'Hierarchy', items: [
       { name: 'Users & Hierarchy', path: '/admin/users', icon: Users },
@@ -66,10 +63,7 @@ const SENIOR_TL_MENU: NavSection[] = [
   { label: 'Team', items: [
       { name: 'Associates', path: '/senior-team-leader/associates', icon: Users },
   ]},
-  { label: 'Applications', items: [
-      { name: 'Team Leader Apps', path: '/senior-team-leader/tl-applications', icon: FileText },
-      { name: 'Associate Apps', path: '/senior-team-leader/associate-applications', icon: FileText },
-  ]},
+  { label: 'SELF PERFORMANCE', items: [] },
   { label: 'Performance', items: [
       { name: 'Team Performance', path: '/senior-team-leader/performance', icon: Activity },
       { name: 'Total Business', path: '/senior-team-leader/business', icon: Briefcase },

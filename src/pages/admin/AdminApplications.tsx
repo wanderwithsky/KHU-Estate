@@ -9,6 +9,7 @@ export default function AdminApplications() {
   const [teamLeaders, setTeamLeaders] = useState<any[]>([]);
   const [seniorTeamLeaders, setSeniorTeamLeaders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
   // Modals state
   const [selectedApp, setSelectedApp] = useState<any>(null);
@@ -22,6 +23,8 @@ export default function AdminApplications() {
   const [selectedStlId, setSelectedStlId] = useState('');
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [createdCredentials, setCreatedCredentials] = useState<any>(null);
 
   useEffect(() => {
     if (profile?.role === 'ADMIN') {
@@ -63,6 +66,9 @@ export default function AdminApplications() {
   const handleApprove = async () => {
     if (!selectedApp) return;
     setProcessing(true);
+    setErrorMsg('');
+    setSuccess('');
+    
     try {
       const role = selectedApp.role_applied_for || 'Associate';
       let edgeFunction = 'create-associate';
@@ -87,17 +93,36 @@ export default function AdminApplications() {
         throw new Error(errMessage || `Failed to create ${role} account`);
       }
 
-      setSuccess(`Account Created! Code: ${data.userCode}, Temp Password: ${data.tempPassword}`);
-      setTimeout(() => {
-        setShowApproveModal(false);
-        setSuccess('');
-        fetchApplications();
-      }, 5000);
+      setSuccess('Account Created Successfully!');
+      setCreatedCredentials({
+        name: selectedApp.full_name,
+        userCode: data.userCode,
+        email: selectedApp.email,
+        tempPassword: data.tempPassword,
+        role: role,
+        manager: selectedApp.assigned_tl ? formatUser(selectedApp.assigned_tl.user_code, selectedApp.assigned_tl.full_name) : 'Not Assigned'
+      });
+      fetchApplications();
     } catch (err: any) {
-      alert(err.message || 'Error creating account');
+      setErrorMsg(err.message || 'Error creating account');
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setShowApproveModal(false);
+    setSuccess('');
+    setErrorMsg('');
+    setCreatedCredentials(null);
+    setSelectedApp(null);
+  };
+
+  const handleCopyCredentials = () => {
+    if (!createdCredentials) return;
+    const text = `Welcome to KHU Developers!\n\nName: ${createdCredentials.name}\nUser ID: ${createdCredentials.userCode}\nEmail: ${createdCredentials.email}\nTemporary Password: ${createdCredentials.tempPassword}\nRole: ${createdCredentials.role}\n\nPlease log in and change your temporary password immediately.`;
+    navigator.clipboard.writeText(text);
+    alert('Credentials copied to clipboard!');
   };
 
   const handleDecline = async () => {
@@ -166,31 +191,52 @@ export default function AdminApplications() {
 
   if (loading) return <div className="p-6">Loading applications...</div>;
 
+  const filteredApplications = applications.filter(app => {
+    if (statusFilter === 'ALL') return true;
+    if (statusFilter === 'PENDING') return app.status.includes('PENDING');
+    if (statusFilter === 'APPROVED') return app.status.includes('APPROVED') || app.status === 'ACCOUNT_CREATED';
+    if (statusFilter === 'DECLINED') return app.status.includes('DECLINED') || app.status.includes('REJECTED');
+    return true;
+  });
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-serif text-brand-deep-navy">Applications</h1>
           <p className="text-sm text-brand-charcoal/70">Global view of all applications</p>
         </div>
+        <div>
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="p-2 border border-brand-soft-grey rounded-md text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-brand-architectural-blue shadow-sm min-w-[160px]"
+          >
+            <option value="ALL">All Applications</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="DECLINED">Declined</option>
+          </select>
+        </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-brand-off-white text-brand-charcoal text-xs uppercase tracking-wider">
-            <tr>
-              <th className="px-6 py-4 font-medium">Applicant</th>
-              <th className="px-6 py-4 font-medium">Role</th>
-              <th className="px-6 py-4 font-medium">Contact</th>
-              <th className="px-6 py-4 font-medium">Referral Code</th>
-              <th className="px-6 py-4 font-medium">Assigned To</th>
-              <th className="px-6 py-4 font-medium">Status</th>
-              <th className="px-6 py-4 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {applications.map((app) => (
-              <tr key={app.id} className="hover:bg-gray-50 transition-colors">
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 relative">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left min-w-max">
+            <thead className="bg-brand-off-white text-brand-charcoal text-xs uppercase tracking-wider">
+              <tr>
+                <th className="px-6 py-4 font-medium">Applicant</th>
+                <th className="px-6 py-4 font-medium">Role</th>
+                <th className="px-6 py-4 font-medium">Contact</th>
+                <th className="px-6 py-4 font-medium">Referral Code</th>
+                <th className="px-6 py-4 font-medium">Assigned To</th>
+                <th className="px-6 py-4 font-medium">Status</th>
+                <th className="px-6 py-4 font-medium sticky right-0 bg-brand-off-white border-l border-gray-200 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)] z-10 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+            {filteredApplications.map((app) => (
+              <tr key={app.id} className="hover:bg-gray-50 transition-colors bg-white group">
                 <td className="px-6 py-4">
                   <div className="font-medium text-brand-deep-navy">{app.full_name}</div>
                   <div className="text-xs text-brand-charcoal/60">{new Date(app.created_at).toLocaleDateString()}</div>
@@ -223,26 +269,32 @@ export default function AdminApplications() {
                     {app.status}
                   </span>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex gap-2">
+                <td className="px-6 py-4 sticky right-0 bg-white group-hover:bg-gray-50 transition-colors border-l border-gray-100 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)] z-0">
+                  <div className="flex gap-2 justify-center min-w-[200px]">
                     {app.status.includes('PENDING') && (
                       <>
                         <button 
-                          onClick={() => { setSelectedApp(app); setShowApproveModal(true); }}
-                          className="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                          onClick={() => { 
+                            setSelectedApp(app); 
+                            setErrorMsg('');
+                            setSuccess('');
+                            setCreatedCredentials(null);
+                            setShowApproveModal(true); 
+                          }}
+                          className="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded font-medium shadow-sm transition-colors"
                         >
                           Approve
                         </button>
 
                         <button 
                           onClick={() => { setSelectedApp(app); setShowTransferModal(true); }}
-                          className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                          className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded font-medium shadow-sm transition-colors"
                         >
                           Transfer
                         </button>
                         <button 
                           onClick={() => { setSelectedApp(app); setShowDeclineModal(true); }}
-                          className="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                          className="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded font-medium shadow-sm transition-colors"
                         >
                           Decline
                         </button>
@@ -252,26 +304,78 @@ export default function AdminApplications() {
                 </td>
               </tr>
             ))}
-            {applications.length === 0 && (
+            {filteredApplications.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-brand-charcoal">
+                <td colSpan={7} className="px-6 py-8 text-center text-brand-charcoal">
                   No applications found.
                 </td>
               </tr>
             )}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       {/* Modals go here */}
       {showApproveModal && selectedApp && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-serif text-brand-deep-navy mb-4">Create ID & Password for {selectedApp.full_name}</h2>
+          <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+            <button 
+              onClick={handleCloseModal}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold"
+            >
+              &times;
+            </button>
+            <h2 className="text-xl font-serif text-brand-deep-navy mb-4">
+              {success ? 'Account Created Successfully' : `Create ID & Password for ${selectedApp.full_name}`}
+            </h2>
             
-            {success ? (
-              <div className="bg-green-50 text-green-800 p-4 rounded mb-6 text-sm font-medium">
-                {success}
+            {errorMsg && (
+              <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded mb-6 text-sm">
+                <strong>Error:</strong> {errorMsg}
+              </div>
+            )}
+
+            {success && createdCredentials ? (
+              <div className="space-y-4 mb-6">
+                <div className="bg-green-50 text-green-800 p-4 rounded text-sm font-medium border border-green-200">
+                  {success}
+                </div>
+                <div className="bg-gray-50 p-4 rounded border border-gray-200 space-y-3 text-sm">
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-gray-500 font-medium">Name:</span>
+                    <span className="col-span-2 font-semibold">{createdCredentials.name}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-gray-500 font-medium">User ID:</span>
+                    <span className="col-span-2 font-semibold text-brand-architectural-blue">{createdCredentials.userCode}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-gray-500 font-medium">Email:</span>
+                    <span className="col-span-2">{createdCredentials.email}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-gray-500 font-medium">Password:</span>
+                    <span className="col-span-2 font-mono bg-white px-2 py-1 border rounded">{createdCredentials.tempPassword}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-gray-500 font-medium">Role:</span>
+                    <span className="col-span-2">{createdCredentials.role}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-gray-500 font-medium">Manager:</span>
+                    <span className="col-span-2">{createdCredentials.manager}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-red-600 font-medium mt-2">
+                  * The user must change their temporary password after their first login.
+                </p>
+                <button 
+                  onClick={handleCopyCredentials}
+                  className="w-full mt-4 bg-brand-deep-navy text-white py-2 rounded text-sm hover:bg-brand-charcoal transition-colors"
+                >
+                  Copy Credentials
+                </button>
               </div>
             ) : (
               <div className="space-y-4 mb-6">
@@ -292,10 +396,10 @@ export default function AdminApplications() {
 
             <div className="flex justify-end gap-3 mt-6">
               <button 
-                onClick={() => { setShowApproveModal(false); setSuccess(''); }}
-                className="px-4 py-2 text-sm text-brand-charcoal hover:bg-gray-100 rounded"
+                onClick={handleCloseModal}
+                className="px-4 py-2 text-sm text-brand-charcoal hover:bg-gray-100 rounded border"
               >
-                {success ? 'CLOSE' : 'CANCEL'}
+                CLOSE
               </button>
               {!success && (
                 <button 

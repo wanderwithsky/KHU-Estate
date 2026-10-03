@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useHeartbeat } from './hooks/useHeartbeat';
 import Layout from './layouts/Layout';
+import PwaInstallPopup from './components/PwaInstallPopup';
 import Home from './pages/Home';
 import Projects from './pages/Projects';
 import ProjectDetails from './pages/ProjectDetails';
@@ -26,6 +27,9 @@ import AdminTeamLeaders from './pages/admin/AdminTeamLeaders';
 import AdminAssociates from './pages/admin/AdminAssociates';
 import AdminVisits from './pages/admin/AdminVisits';
 import AdminBusiness from './pages/admin/AdminBusiness';
+import AdminLeads from './pages/admin/AdminLeads';
+import AdminClients from './pages/admin/AdminClients';
+import AdminCommissions from './pages/admin/AdminCommissions';
 import UserVisits from './pages/shared/UserVisits';
 
 // Senior TL
@@ -111,12 +115,12 @@ function App() {
             <Route path="associates" element={<AdminAssociates />} />
             {/* Business */}
             <Route path="business" element={<AdminBusiness />} />
-          <Route path="visits" element={<AdminVisits />} />
-            <Route path="leads" element={<FeatureShell title="Leads" />} />
-            <Route path="clients" element={<FeatureShell title="Clients" />} />
+            <Route path="visits" element={<AdminVisits />} />
+            <Route path="leads" element={<AdminLeads />} />
+            <Route path="clients" element={<AdminClients />} />
             <Route path="deals" element={<FeatureShell title="Deals / Bookings" />} />
             <Route path="payments" element={<FeatureShell title="Payments" />} />
-            <Route path="commissions" element={<FeatureShell title="Commissions" />} />
+            <Route path="commissions" element={<AdminCommissions />} />
             {/* Finance */}
             <Route path="income" element={<FeatureShell title="Income" />} />
             <Route path="expenses" element={<FeatureShell title="Expenses" />} />
@@ -217,6 +221,7 @@ function App() {
           {/* Catch all to redirect to home or 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <PwaInstallPopup />
       </BrowserRouter>
     </AuthProvider>
   );
