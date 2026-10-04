@@ -74,6 +74,7 @@ serve(async (req) => {
       .eq('email', finalEmail)
       .maybeSingle()
 
+    let authUserId = null;
     let targetProfileId = null;
     let userCode = null;
     let tempPassword = crypto.randomUUID().slice(0, 12) + "Khu1!";
@@ -83,20 +84,18 @@ serve(async (req) => {
         throw new Error(`Conflict: A user with this email exists as a ${existingProfile.role}. Role conversion is not permitted automatically.`);
       }
       targetProfileId = existingProfile.id;
+      authUserId = existingProfile.auth_user_id;
       userCode = existingProfile.user_code;
 
-      if (app && app.status === 'ACCOUNT_CREATED' && app.created_account_user_id === targetProfileId) {
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            message: 'Account already created and linked successfully',
-            userCode
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-        );
-      }
+      const { error: updateAuthError } = await supabaseClient.auth.admin.updateUserById(
+          authUserId,
+          { password: tempPassword }
+      );
+      if (updateAuthError) throw new Error(`Failed to reset password for existing account: ${updateAuthError.message}`);
+      
+      await supabaseClient.from('user_profiles').update({ must_change_password: true }).eq('id', targetProfileId);
+
     } else {
-      let authUserId = null;
       let isRecovery = false;
 
       // 6. Create Supabase Auth User
@@ -209,8 +208,12 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: existingProfile ? 'Account linked successfully' : 'Senior Team Leader created successfully',
-        tempPassword: existingProfile ? null : tempPassword,
-        userCode
+        userId: authUserId,
+        userCode: userCode,
+        email: finalEmail,
+        temporaryPassword: tempPassword,
+        role: 'SENIOR_TL',
+        mustChangePassword: true
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )

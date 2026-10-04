@@ -78,6 +78,9 @@ export default function TeamLeaderDashboard() {
     }
   };
 
+  const [createdCredentials, setCreatedCredentials] = useState<any>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleApprove = async () => {
     setProcessing(true);
     setError('');
@@ -101,19 +104,39 @@ export default function TeamLeaderDashboard() {
         throw new Error(errMessage || 'Failed to create Associate account');
       }
 
-      setSuccess(`Account Created! Code: ${data.userCode}, Temp Password: ${data.tempPassword}`);
-      setTimeout(() => {
-        setShowApproveModal(false);
-        setSuccess('');
-        setSelectedApp(null);
-        fetchDashboardData();
-      }, 5000);
+      if (!data || !data.temporaryPassword) {
+        throw new Error('Account creation partially succeeded, but no temporary password was returned from the server.');
+      }
+
+      setSuccess('Account Created Successfully!');
+      setCreatedCredentials({
+        name: selectedApp.full_name,
+        userCode: data.userCode,
+        email: data.email || selectedApp.email,
+        temporaryPassword: data.temporaryPassword,
+        role: data.role || 'ASSOCIATE',
+        manager: profile ? formatUser(profile.user_code, profile.full_name) : 'Not Assigned'
+      });
+      fetchDashboardData();
       
     } catch (err: any) {
       setError(err.message);
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleCopyCredentials = () => {
+    if (!createdCredentials) return;
+    const text = `Welcome to KHU Developers!\n\nName: ${createdCredentials.name}\nUser ID: ${createdCredentials.userCode}\nEmail: ${createdCredentials.email}\nTemporary Password: ${createdCredentials.temporaryPassword}\nRole: ${createdCredentials.role}\n\nPlease log in and change your temporary password immediately.`;
+    navigator.clipboard.writeText(text);
+    alert('Credentials copied to clipboard!');
+  };
+
+  const handleCopyPassword = () => {
+    if (!createdCredentials) return;
+    navigator.clipboard.writeText(createdCredentials.temporaryPassword);
+    alert('Password copied to clipboard!');
   };
 
   const handleDecline = async (e: React.FormEvent) => {
@@ -357,18 +380,68 @@ export default function TeamLeaderDashboard() {
       {/* APPROVE MODAL */}
       {showApproveModal && selectedApp && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-2xl border border-brand-soft-grey">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-2xl border border-brand-soft-grey relative">
             <h2 className="text-xl font-serif text-brand-deep-navy mb-4">Create Associate Account</h2>
             
             {error && <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm border border-red-200 rounded">{error}</div>}
             
-            {success ? (
-              <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded mb-6 text-sm font-medium">
-                <p className="text-base text-green-900 mb-2">Account successfully created!</p>
-                <div className="bg-white p-3 rounded border border-green-100 font-mono select-all mb-2 shadow-inner">
+            {success && createdCredentials ? (
+              <div className="space-y-4 mb-6">
+                <div className="bg-green-50 text-green-800 p-4 rounded text-sm font-medium border border-green-200">
                   {success}
                 </div>
-                <p className="text-xs opacity-80">Please securely provide these credentials to the user.</p>
+                <div className="bg-gray-50 p-4 rounded border border-gray-200 space-y-3 text-sm">
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-gray-500 font-medium">Name:</span>
+                    <span className="col-span-2 font-semibold">{createdCredentials.name}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-gray-500 font-medium">User ID:</span>
+                    <span className="col-span-2 font-semibold text-brand-architectural-blue">{createdCredentials.userCode}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-gray-500 font-medium">Email:</span>
+                    <span className="col-span-2">{createdCredentials.email}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 items-center">
+                    <span className="text-gray-500 font-medium">Password:</span>
+                    <div className="col-span-2 flex items-center gap-2">
+                      <span className="font-mono bg-white px-2 py-1 border rounded flex-1">
+                        {showPassword ? createdCredentials.temporaryPassword : '••••••••••••'}
+                      </span>
+                      <button 
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-xs text-brand-architectural-blue hover:underline"
+                      >
+                        {showPassword ? 'Hide' : 'Show'}
+                      </button>
+                      <button 
+                        onClick={handleCopyPassword}
+                        className="text-xs text-gray-500 hover:text-gray-800"
+                        title="Copy Password"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-gray-500 font-medium">Role:</span>
+                    <span className="col-span-2">{createdCredentials.role}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-gray-500 font-medium">Manager:</span>
+                    <span className="col-span-2">{createdCredentials.manager}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-red-600 font-medium mt-2">
+                  * The user must change their temporary password after their first login.
+                </p>
+                <button 
+                  onClick={handleCopyCredentials}
+                  className="w-full mt-4 bg-brand-deep-navy text-white py-2 rounded text-sm hover:bg-brand-charcoal transition-colors"
+                >
+                  Copy Credentials
+                </button>
               </div>
             ) : (
               <div className="space-y-4 mb-6 bg-brand-off-white p-4 rounded border border-gray-100">
@@ -388,7 +461,7 @@ export default function TeamLeaderDashboard() {
 
             <div className="flex justify-end gap-3 mt-6">
               <button 
-                onClick={() => { setShowApproveModal(false); setSuccess(''); setSelectedApp(null); fetchDashboardData(); }}
+                onClick={() => { setShowApproveModal(false); setShowPassword(false); setSuccess(''); setSelectedApp(null); setCreatedCredentials(null); fetchDashboardData(); }}
                 className="px-4 py-2 text-sm font-medium text-brand-charcoal hover:bg-gray-100 rounded transition-colors"
               >
                 {success ? 'CLOSE' : 'CANCEL'}

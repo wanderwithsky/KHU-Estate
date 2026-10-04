@@ -25,6 +25,7 @@ export default function AdminApplications() {
   const [success, setSuccess] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [createdCredentials, setCreatedCredentials] = useState<any>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (profile?.role === 'ADMIN') {
@@ -93,13 +94,17 @@ export default function AdminApplications() {
         throw new Error(errMessage || `Failed to create ${role} account`);
       }
 
+      if (!data || !data.temporaryPassword) {
+        throw new Error('Account creation partially succeeded, but no temporary password was returned from the server.');
+      }
+
       setSuccess('Account Created Successfully!');
       setCreatedCredentials({
         name: selectedApp.full_name,
         userCode: data.userCode,
-        email: selectedApp.email,
-        tempPassword: data.tempPassword,
-        role: role,
+        email: data.email || selectedApp.email,
+        temporaryPassword: data.temporaryPassword,
+        role: data.role || role,
         manager: selectedApp.assigned_tl ? formatUser(selectedApp.assigned_tl.user_code, selectedApp.assigned_tl.full_name) : 'Not Assigned'
       });
       fetchApplications();
@@ -112,6 +117,7 @@ export default function AdminApplications() {
 
   const handleCloseModal = () => {
     setShowApproveModal(false);
+    setShowPassword(false);
     setSuccess('');
     setErrorMsg('');
     setCreatedCredentials(null);
@@ -120,9 +126,15 @@ export default function AdminApplications() {
 
   const handleCopyCredentials = () => {
     if (!createdCredentials) return;
-    const text = `Welcome to KHU Developers!\n\nName: ${createdCredentials.name}\nUser ID: ${createdCredentials.userCode}\nEmail: ${createdCredentials.email}\nTemporary Password: ${createdCredentials.tempPassword}\nRole: ${createdCredentials.role}\n\nPlease log in and change your temporary password immediately.`;
+    const text = `Welcome to KHU Developers!\n\nName: ${createdCredentials.name}\nUser ID: ${createdCredentials.userCode}\nEmail: ${createdCredentials.email}\nTemporary Password: ${createdCredentials.temporaryPassword}\nRole: ${createdCredentials.role}\n\nPlease log in and change your temporary password immediately.`;
     navigator.clipboard.writeText(text);
     alert('Credentials copied to clipboard!');
+  };
+
+  const handleCopyPassword = () => {
+    if (!createdCredentials) return;
+    navigator.clipboard.writeText(createdCredentials.temporaryPassword);
+    alert('Password copied to clipboard!');
   };
 
   const handleDecline = async () => {
@@ -354,9 +366,26 @@ export default function AdminApplications() {
                     <span className="text-gray-500 font-medium">Email:</span>
                     <span className="col-span-2">{createdCredentials.email}</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-2 items-center">
                     <span className="text-gray-500 font-medium">Password:</span>
-                    <span className="col-span-2 font-mono bg-white px-2 py-1 border rounded">{createdCredentials.tempPassword}</span>
+                    <div className="col-span-2 flex items-center gap-2">
+                      <span className="font-mono bg-white px-2 py-1 border rounded flex-1">
+                        {showPassword ? createdCredentials.temporaryPassword : '••••••••••••'}
+                      </span>
+                      <button 
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-xs text-brand-architectural-blue hover:underline"
+                      >
+                        {showPassword ? 'Hide' : 'Show'}
+                      </button>
+                      <button 
+                        onClick={handleCopyPassword}
+                        className="text-xs text-gray-500 hover:text-gray-800"
+                        title="Copy Password"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                      </button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <span className="text-gray-500 font-medium">Role:</span>

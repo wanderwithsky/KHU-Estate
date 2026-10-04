@@ -68,6 +68,7 @@ serve(async (req) => {
       .eq('email', application.email)
       .maybeSingle()
 
+    let authUserId = null;
     let targetProfileId = null;
     let userCode = null;
     let tempPassword = crypto.randomUUID().slice(0, 12) + "A1!";
@@ -77,20 +78,18 @@ serve(async (req) => {
         throw new Error(`Conflict: A user with this email exists as a ${existingProfile.role}. Role conversion is not permitted automatically.`);
       }
       targetProfileId = existingProfile.id;
+      authUserId = existingProfile.auth_user_id;
       userCode = existingProfile.user_code;
 
-      if (application.status === 'ACCOUNT_CREATED' && application.created_account_user_id === targetProfileId) {
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            message: 'Account already created and linked successfully',
-            userCode
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-        );
-      }
+      const { error: updateAuthError } = await supabaseClient.auth.admin.updateUserById(
+          authUserId,
+          { password: tempPassword }
+      );
+      if (updateAuthError) throw new Error(`Failed to reset password for existing account: ${updateAuthError.message}`);
+      
+      await supabaseClient.from('user_profiles').update({ must_change_password: true }).eq('id', targetProfileId);
+
     } else {
-      let authUserId = null;
       let isRecovery = false;
 
       // 6. Create Auth Identity
@@ -212,8 +211,12 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: existingProfile ? 'Account linked successfully' : 'Account created successfully', 
-        tempPassword: existingProfile ? null : tempPassword,
-        userCode 
+        userId: authUserId,
+        userCode: userCode,
+        email: application.email,
+        temporaryPassword: tempPassword,
+        role: 'ASSOCIATE',
+        mustChangePassword: true
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
