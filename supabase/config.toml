@@ -1,4 +1,3 @@
-
 [functions.submit-contact]
 enabled = true
 verify_jwt = false
