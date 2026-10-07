@@ -30,6 +30,7 @@ import AdminBusiness from './pages/admin/AdminBusiness';
 import AdminLeads from './pages/admin/AdminLeads';
 import AdminClients from './pages/admin/AdminClients';
 import AdminCommissions from './pages/admin/AdminCommissions';
+import AdminSTLPerformance from './pages/admin/AdminSTLPerformance';
 import UserVisits from './pages/shared/UserVisits';
 
 // Senior TL
@@ -126,7 +127,7 @@ function App() {
             <Route path="expenses" element={<FeatureShell title="Expenses" />} />
             <Route path="finance-reports" element={<FeatureShell title="Revenue Reports" />} />
             {/* Performance */}
-            <Route path="performance-stl" element={<FeatureShell title="Senior TL Performance" />} />
+            <Route path="performance-stl" element={<AdminSTLPerformance />} />
             <Route path="performance-tl" element={<FeatureShell title="Team Leader Performance" />} />
             <Route path="performance-associate" element={<FeatureShell title="Associate Performance" />} />
             <Route path="targets" element={<FeatureShell title="Targets" />} />
