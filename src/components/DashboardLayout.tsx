@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useAuth } from '../context/AuthContext';
 import { formatUser } from '../utils/formatUser';
+import NotificationBell from './NotificationBell';
 import { 
   Menu, LogOut, User, LayoutDashboard, 
   Users, Briefcase, FileText, BarChart3, Settings, Bell,
@@ -280,6 +281,7 @@ export default function DashboardLayout() {
           </div>
           
           <div className="flex items-center gap-4">
+            <NotificationBell />
             <span className="hidden md:inline-flex px-3 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full border border-green-200">
               System Active
             </span>

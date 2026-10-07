@@ -34,6 +34,7 @@ import AdminSTLPerformance from './pages/admin/AdminSTLPerformance';
 import AdminTLPerformance from './pages/admin/AdminTLPerformance';
 import AdminAssociatePerformance from './pages/admin/AdminAssociatePerformance';
 import AdminTargets from './pages/admin/AdminTargets';
+import NotificationsCenter from './pages/shared/NotificationsCenter';
 import UserVisits from './pages/shared/UserVisits';
 
 // Senior TL
@@ -140,7 +141,7 @@ function App() {
             <Route path="reports-visits" element={<FeatureShell title="Visit Reports" />} />
             <Route path="reports-performance" element={<FeatureShell title="Performance Reports" />} />
             {/* System */}
-            <Route path="notifications" element={<FeatureShell title="Notifications" />} />
+            <Route path="notifications" element={<NotificationsCenter />} />
             <Route path="audit-logs" element={<FeatureShell title="Activity Logs" />} />
             <Route path="settings" element={<FeatureShell title="Settings" />} />
           </Route>
@@ -168,7 +169,7 @@ function App() {
             <Route path="reports-visits" element={<FeatureShell title="Visit Report" />} />
             
             <Route path="profile" element={<Profile />} />
-            <Route path="notifications" element={<FeatureShell title="Notifications" />} />
+            <Route path="notifications" element={<NotificationsCenter />} />
             <Route path="settings" element={<FeatureShell title="Settings" />} />
           </Route>
 
@@ -197,7 +198,7 @@ function App() {
             <Route path="reports-visits" element={<FeatureShell title="Visit Report" />} />
             
             <Route path="profile" element={<Profile />} />
-            <Route path="notifications" element={<FeatureShell title="Notifications" />} />
+            <Route path="notifications" element={<NotificationsCenter />} />
             <Route path="settings" element={<FeatureShell title="Settings" />} />
           </Route>
 
@@ -214,7 +215,7 @@ function App() {
             <Route path="visits" element={<UserVisits />} />
             <Route path="my-visits" element={<UserVisits />} />
             <Route path="my-business" element={<MyBusiness />} />
-            <Route path="notifications" element={<FeatureShell title="Notifications" />} />
+            <Route path="notifications" element={<NotificationsCenter />} />
             <Route path="settings" element={<FeatureShell title="Settings" />} />
           </Route>
           
