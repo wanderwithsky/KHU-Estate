@@ -33,6 +33,7 @@ import AdminCommissions from './pages/admin/AdminCommissions';
 import AdminSTLPerformance from './pages/admin/AdminSTLPerformance';
 import AdminTLPerformance from './pages/admin/AdminTLPerformance';
 import AdminAssociatePerformance from './pages/admin/AdminAssociatePerformance';
+import AdminTargets from './pages/admin/AdminTargets';
 import UserVisits from './pages/shared/UserVisits';
 
 // Senior TL
@@ -132,8 +133,7 @@ function App() {
             <Route path="performance-stl" element={<AdminSTLPerformance />} />
             <Route path="performance-tl" element={<AdminTLPerformance />} />
             <Route path="performance-associate" element={<AdminAssociatePerformance />} />
-            <Route path="targets" element={<FeatureShell title="Targets" />} />
-            <Route path="rewards" element={<FeatureShell title="Rewards" />} />
+            <Route path="targets" element={<AdminTargets />} />
             {/* Reports */}
             <Route path="reports-business" element={<FeatureShell title="Business Reports" />} />
             <Route path="reports-income" element={<FeatureShell title="Income Reports" />} />
@@ -162,7 +162,6 @@ function App() {
             <Route path="business" element={<MyBusiness />} />
             <Route path="visits" element={<UserVisits />} />
             <Route path="my-visits" element={<UserVisits />} />
-            <Route path="rewards" element={<FeatureShell title="Rewards" />} />
             
             <Route path="reports-income" element={<FeatureShell title="Income Report" />} />
             <Route path="reports-business" element={<FeatureShell title="Business Report" />} />
@@ -192,7 +191,6 @@ function App() {
             <Route path="my-visits" element={<UserVisits />} />
             
             <Route path="targets" element={<FeatureShell title="Targets" />} />
-            <Route path="rewards" element={<FeatureShell title="Rewards" />} />
             
             <Route path="reports-income" element={<FeatureShell title="Income Report" />} />
             <Route path="reports-business" element={<FeatureShell title="Business Report" />} />
@@ -213,7 +211,6 @@ function App() {
             <Route path="profile" element={<Profile />} />
             <Route path="income" element={<FeatureShell title="Income Report" />} />
             <Route path="business" element={<FeatureShell title="Total Business" />} />
-            <Route path="rewards" element={<FeatureShell title="Rewards" />} />
             <Route path="visits" element={<UserVisits />} />
             <Route path="my-visits" element={<UserVisits />} />
             <Route path="my-business" element={<MyBusiness />} />

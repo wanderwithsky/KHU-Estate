@@ -6,7 +6,7 @@ import { formatUser } from '../utils/formatUser';
 import { 
   Menu, LogOut, User, LayoutDashboard, 
   Users, Briefcase, FileText, BarChart3, Settings, Bell,
-  Target, Award, CreditCard, Building, MapPin, Activity
+  Target, CreditCard, Building, MapPin, Activity
 } from 'lucide-react';
 
 type NavItem = {
@@ -46,7 +46,6 @@ const ADMIN_MENU: NavSection[] = [
       { name: 'Team Leader Performance', path: '/admin/performance-tl', icon: Activity },
       { name: 'Associate Performance', path: '/admin/performance-associate', icon: Activity },
       { name: 'Targets', path: '/admin/targets', icon: Target },
-      { name: 'Rewards', path: '/admin/rewards', icon: Award },
   ]},
   { label: 'System', items: [
       { name: 'Notifications', path: '/admin/notifications', icon: Bell },
@@ -68,7 +67,6 @@ const SENIOR_TL_MENU: NavSection[] = [
       { name: 'Team Performance', path: '/senior-team-leader/performance', icon: Activity },
       { name: 'Total Business', path: '/senior-team-leader/business', icon: Briefcase },
       { name: 'Total Visits', path: '/senior-team-leader/visits', icon: MapPin },
-      { name: 'Rewards', path: '/senior-team-leader/rewards', icon: Award },
   ]},
   { label: 'Reports', items: [
       { name: 'Income Report', path: '/senior-team-leader/reports-income', icon: FileText },
@@ -104,7 +102,6 @@ const TEAM_LEADER_MENU: NavSection[] = [
   ]},
   { label: 'Performance', items: [
       { name: 'Targets', path: '/team-leader/targets', icon: Target },
-      { name: 'Rewards', path: '/team-leader/rewards', icon: Award },
   ]},
   { label: 'Reports', items: [
       { name: 'Income Report', path: '/team-leader/reports-income', icon: FileText },
@@ -131,7 +128,6 @@ const ASSOCIATE_MENU: NavSection[] = [
   { label: 'Performance', items: [
       { name: 'Income Report', path: '/associate/income', icon: BarChart3 },
       { name: 'Total Business', path: '/associate/business', icon: Briefcase },
-      { name: 'Rewards', path: '/associate/rewards', icon: Award },
       { name: 'Plot Visits', path: '/associate/visits', icon: MapPin },
   ]},
   { label: 'Activity', items: [
