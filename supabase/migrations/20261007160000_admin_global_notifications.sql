@@ -90,7 +90,58 @@ CREATE TRIGGER on_user_profiles_notify
     FOR EACH ROW
     EXECUTE FUNCTION public.trg_user_profiles_notify();
 
--- 3. businesses trigger
+-- 3. businesses trigger (and TL Target Achieved Check)
+CREATE OR REPLACE FUNCTION public.check_tl_target_achieved(p_assigned_user_id UUID) RETURNS void AS $$
+DECLARE
+    v_role TEXT;
+    v_tl_id UUID;
+    v_total NUMERIC;
+    v_tl_name TEXT;
+    v_tl_code TEXT;
+    v_already_notified BOOLEAN;
+BEGIN
+    SELECT role INTO v_role FROM public.user_profiles WHERE id = p_assigned_user_id;
+    
+    IF v_role = 'TEAM_LEADER' THEN
+        v_tl_id := p_assigned_user_id;
+    ELSIF v_role = 'ASSOCIATE' THEN
+        SELECT parent_user_id INTO v_tl_id FROM public.user_profiles WHERE id = p_assigned_user_id;
+    END IF;
+
+    IF v_tl_id IS NOT NULL THEN
+        -- check if they are still a TL
+        SELECT role, full_name, user_code INTO v_role, v_tl_name, v_tl_code FROM public.user_profiles WHERE id = v_tl_id;
+        
+        IF v_role = 'TEAM_LEADER' THEN
+            -- calculate total business
+            SELECT COALESCE(SUM(deal_amount), 0) INTO v_total
+            FROM public.businesses
+            WHERE assigned_user_id IN (
+                SELECT id FROM public.user_profiles WHERE id = v_tl_id OR parent_user_id = v_tl_id
+            );
+            
+            IF v_total >= 5000000 THEN
+                -- Check if we already notified
+                SELECT EXISTS(
+                    SELECT 1 FROM public.notifications 
+                    WHERE type = 'TARGET_ACHIEVED' AND entity_id = v_tl_id
+                ) INTO v_already_notified;
+                
+                IF NOT v_already_notified THEN
+                    PERFORM public.notify_admins(
+                        'TARGET_ACHIEVED',
+                        'TL Target Achieved',
+                        coalesce(v_tl_code, '') || ' — ' || v_tl_name || ' has achieved the ₹50,00,000 business target.',
+                        'USER',
+                        v_tl_id
+                    );
+                END IF;
+            END IF;
+        END IF;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 CREATE OR REPLACE FUNCTION public.trg_businesses_notify()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -109,6 +160,7 @@ BEGIN
             'BUSINESS',
             NEW.id
         );
+        PERFORM public.check_tl_target_achieved(NEW.assigned_user_id);
     ELSIF TG_OP = 'UPDATE' THEN
         IF NEW.assigned_user_id <> OLD.assigned_user_id THEN
             SELECT full_name, user_code INTO v_assigned_name, v_assigned_code FROM public.user_profiles WHERE id = NEW.assigned_user_id;
@@ -121,6 +173,10 @@ BEGIN
                 'BUSINESS',
                 NEW.id
             );
+        END IF;
+        
+        IF NEW.deal_amount <> OLD.deal_amount OR NEW.assigned_user_id <> OLD.assigned_user_id THEN
+             PERFORM public.check_tl_target_achieved(NEW.assigned_user_id);
         END IF;
     END IF;
     RETURN NEW;
