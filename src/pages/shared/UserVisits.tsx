@@ -69,8 +69,20 @@ export default function UserVisits() {
         videoRef.current.srcObject = stream;
       }
     } catch (err: any) {
-      console.error('Camera error:', err);
-      setCameraError('Camera access was denied or unavailable.');
+      console.warn('Front camera not found, trying default video...', err);
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: false 
+        });
+        streamRef.current = fallbackStream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = fallbackStream;
+        }
+      } catch (fallbackErr: any) {
+        console.error('Camera fallback error:', fallbackErr);
+        setCameraError('Camera is unavailable on this device. You can upload a photo instead.');
+      }
     }
   };
 
