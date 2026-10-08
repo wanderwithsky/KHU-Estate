@@ -36,6 +36,7 @@ import AdminAssociatePerformance from './pages/admin/AdminAssociatePerformance';
 import AdminTargets from './pages/admin/AdminTargets';
 import NotificationsCenter from './pages/shared/NotificationsCenter';
 import UserVisits from './pages/shared/UserVisits';
+import Settings from './pages/shared/Settings';
 
 // Senior TL
 import SeniorTLDashboard from './pages/senior-tl/SeniorTLDashboard';
@@ -142,7 +143,7 @@ function App() {
             <Route path="reports-performance" element={<FeatureShell title="Performance Reports" />} />
             {/* System */}
             <Route path="notifications" element={<NotificationsCenter />} />
-            <Route path="settings" element={<FeatureShell title="Settings" />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
 
           {/* Protected Senior TL Routes */}
@@ -169,7 +170,7 @@ function App() {
             
             <Route path="profile" element={<Profile />} />
             <Route path="notifications" element={<NotificationsCenter />} />
-            <Route path="settings" element={<FeatureShell title="Settings" />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
 
           <Route path="/team-leader" element={
@@ -198,7 +199,7 @@ function App() {
             
             <Route path="profile" element={<Profile />} />
             <Route path="notifications" element={<NotificationsCenter />} />
-            <Route path="settings" element={<FeatureShell title="Settings" />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
 
           <Route path="/associate" element={
@@ -215,7 +216,7 @@ function App() {
             <Route path="my-visits" element={<UserVisits />} />
             <Route path="my-business" element={<MyBusiness />} />
             <Route path="notifications" element={<NotificationsCenter />} />
-            <Route path="settings" element={<FeatureShell title="Settings" />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
           
           {/* Catch all to redirect to home or 404 */}
