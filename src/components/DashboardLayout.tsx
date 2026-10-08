@@ -50,7 +50,6 @@ const ADMIN_MENU: NavSection[] = [
   ]},
   { label: 'System', items: [
       { name: 'Notifications', path: '/admin/notifications', icon: Bell },
-      { name: 'Activity Logs', path: '/admin/audit-logs', icon: Activity },
       { name: 'Settings', path: '/admin/settings', icon: Settings },
   ]},
 ];

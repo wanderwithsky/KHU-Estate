@@ -142,7 +142,6 @@ function App() {
             <Route path="reports-performance" element={<FeatureShell title="Performance Reports" />} />
             {/* System */}
             <Route path="notifications" element={<NotificationsCenter />} />
-            <Route path="audit-logs" element={<FeatureShell title="Activity Logs" />} />
             <Route path="settings" element={<FeatureShell title="Settings" />} />
           </Route>
 
