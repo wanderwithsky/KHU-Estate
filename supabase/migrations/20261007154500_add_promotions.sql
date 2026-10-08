@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS public.promotions (
 ALTER TABLE public.promotions ENABLE ROW LEVEL SECURITY;
 
 -- Add policies
+DROP POLICY IF EXISTS "Admin full access on promotions" ON public.promotions;
 CREATE POLICY "Admin full access on promotions" ON public.promotions FOR ALL USING (
     EXISTS (
         SELECT 1 FROM public.user_profiles
@@ -22,6 +23,7 @@ CREATE POLICY "Admin full access on promotions" ON public.promotions FOR ALL USI
     )
 );
 
+DROP POLICY IF EXISTS "Users can read own promotions" ON public.promotions;
 CREATE POLICY "Users can read own promotions" ON public.promotions FOR SELECT USING (
     user_id = auth.uid()
 );

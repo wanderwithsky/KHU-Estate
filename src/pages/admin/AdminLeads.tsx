@@ -97,18 +97,24 @@ export default function AdminLeads() {
     setUpdating(true);
     try {
       // Use atomic RPC function to safely convert lead
-      const { error: rpcError } = await supabase.rpc('convert_lead_to_client', {
+      const { data, error: rpcError } = await supabase.rpc('convert_lead_to_client', {
         p_lead_id: lead.id,
         p_actor_user_id: profile?.id
       });
       
       if (rpcError) throw rpcError;
       
-      alert('Lead successfully converted to Client!');
+      if (data && data.already_exists) {
+        alert('This Lead has already been converted to a Client.');
+      } else {
+        alert('Lead successfully converted to Client!');
+      }
+      
       setShowDetailModal(false);
       fetchLeads();
     } catch (err: any) {
-      alert(err.message || 'Error converting lead to client');
+      alert(err.message || 'Unable to convert lead to client. Please try again.');
+      fetchLeads(); // Force UI refresh to reset the optimistic dropdown state
     } finally {
       setUpdating(false);
     }
