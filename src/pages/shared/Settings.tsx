@@ -195,7 +195,7 @@ const Settings: React.FC = () => {
                 required
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-khu-blue focus:ring-khu-blue sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-architectural-blue focus:ring-brand-architectural-blue sm:text-sm"
               />
             </div>
             <div>
@@ -205,7 +205,7 @@ const Settings: React.FC = () => {
                 required
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-khu-blue focus:ring-khu-blue sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-architectural-blue focus:ring-brand-architectural-blue sm:text-sm"
               />
             </div>
             <div>
@@ -215,14 +215,14 @@ const Settings: React.FC = () => {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-khu-blue focus:ring-khu-blue sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-architectural-blue focus:ring-brand-architectural-blue sm:text-sm"
               />
             </div>
             <div className="pt-2 flex items-center space-x-3">
               <button
                 type="submit"
                 disabled={changingPassword}
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-khu-blue hover:bg-khu-blue-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-khu-blue disabled:opacity-50"
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-brand-architectural-blue hover:bg-brand-deep-navy focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-architectural-blue disabled:opacity-50"
               >
                 {changingPassword ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : null}
                 Change Password
@@ -237,7 +237,7 @@ const Settings: React.FC = () => {
                   setPasswordSuccess('');
                 }}
                 disabled={changingPassword}
-                className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-khu-blue"
+                className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-architectural-blue"
               >
                 Cancel
               </button>
@@ -336,7 +336,7 @@ const Settings: React.FC = () => {
                     setDeleteError('');
                   }}
                   disabled={deleting}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-khu-blue sm:mt-0 sm:w-auto sm:text-sm"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-architectural-blue sm:mt-0 sm:w-auto sm:text-sm"
                 >
                   Cancel
                 </button>
