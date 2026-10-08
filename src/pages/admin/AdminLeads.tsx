@@ -3,8 +3,10 @@ import { supabase } from '../../lib/supabase';
 import { Search, Phone, Mail, Calendar, User, Clock, Copy, X, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatUser } from '../../utils/formatUser';
+import { useCurrentUser } from '../../hooks/useCurrentUser';
 
 export default function AdminLeads() {
+  const { profile } = useCurrentUser();
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -65,7 +67,14 @@ export default function AdminLeads() {
     return matchesSearch && matchesStatus;
   });
 
-  const updateLeadStatus = async (leadId: string, newStatus: string) => {
+  const updateLeadStatus = async (leadId: string, newStatus: string, fullLead?: any) => {
+    if (newStatus === 'CONVERTED') {
+      const leadToConvert = fullLead || leads.find(l => l.id === leadId);
+      if (leadToConvert) {
+        return convertToClient(leadToConvert);
+      }
+    }
+    
     setUpdating(true);
     try {
       const { error } = await supabase
@@ -74,7 +83,7 @@ export default function AdminLeads() {
         .eq('id', leadId);
         
       if (error) throw error;
-      if (selectedLead) {
+      if (selectedLead && selectedLead.id === leadId) {
         setSelectedLead({ ...selectedLead, status: newStatus });
       }
     } catch (err: any) {
@@ -89,7 +98,8 @@ export default function AdminLeads() {
     try {
       // Use atomic RPC function to safely convert lead
       const { error: rpcError } = await supabase.rpc('convert_lead_to_client', {
-        p_lead_id: lead.id
+        p_lead_id: lead.id,
+        p_actor_user_id: profile?.id
       });
       
       if (rpcError) throw rpcError;
@@ -179,7 +189,7 @@ export default function AdminLeads() {
                     <td className="px-6 py-4">
                       <select
                         value={lead.status}
-                        onChange={(e) => updateLeadStatus(lead.id, e.target.value)}
+                        onChange={(e) => updateLeadStatus(lead.id, e.target.value, lead)}
                         disabled={updating}
                         className={`text-xs font-semibold px-2 py-1 rounded border-0 cursor-pointer ${
                           lead.status === 'NEW' ? 'bg-yellow-100 text-yellow-800' :
@@ -297,7 +307,7 @@ export default function AdminLeads() {
                   <p className="text-[10px] uppercase tracking-wider text-blue-600 font-bold mb-2">Lead Status</p>
                   <select
                     value={selectedLead.status}
-                    onChange={(e) => updateLeadStatus(selectedLead.id, e.target.value)}
+                    onChange={(e) => updateLeadStatus(selectedLead.id, e.target.value, selectedLead)}
                     disabled={updating}
                     className="w-full text-sm font-semibold px-3 py-2 rounded-md border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
                   >
