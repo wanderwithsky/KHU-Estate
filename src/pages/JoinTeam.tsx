@@ -96,7 +96,7 @@ export default function JoinTeam() {
         .insert([{
           application_number: applicationNumber,
           full_name: formData.fullName,
-          phone: formData.phone,
+          phone: formData.phone.trim() || null,
           email: formData.email.trim() || null,
           city: formData.city,
           message: formData.message,
@@ -197,10 +197,9 @@ export default function JoinTeam() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[11px] tracking-[0.1em] uppercase text-brand-charcoal font-medium">Phone *</label>
+                    <label className="text-[11px] tracking-[0.1em] uppercase text-brand-charcoal font-medium">Phone</label>
                     <input 
                       type="tel" 
-                      required
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
                       className="w-full border border-brand-soft-grey bg-brand-off-white px-4 py-3.5 rounded-lg focus:outline-none focus:border-brand-architectural-blue focus:bg-white transition-colors text-sm" 

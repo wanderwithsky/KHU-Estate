@@ -51,18 +51,16 @@ export default function AdminApplications() {
   const fetchTeamLeaders = async () => {
     const { data } = await supabase
       .from('user_profiles')
-      .select('id, user_code, full_name')
-      .eq('role', 'TEAM_LEADER')
-      .eq('status', 'ACTIVE');
+      .select('id, user_code, full_name, status')
+      .eq('role', 'TEAM_LEADER');
     if (data) setTeamLeaders(data);
   };
 
   const fetchSeniorTeamLeaders = async () => {
     const { data } = await supabase
       .from('user_profiles')
-      .select('id, user_code, full_name')
-      .eq('role', 'SENIOR_TL')
-      .eq('status', 'ACTIVE');
+      .select('id, user_code, full_name, status')
+      .eq('role', 'SENIOR_TL');
     if (data) setSeniorTeamLeaders(data);
   };
 
@@ -506,7 +504,7 @@ export default function AdminApplications() {
                 <p className="text-sm mb-4">Select a Senior Team Leader to transfer {selectedApp.full_name}'s application to:</p>
                 {seniorTeamLeaders.length === 0 ? (
                   <div className="p-4 bg-yellow-50 text-yellow-800 text-sm mb-6 rounded">
-                    No active Senior Team Leaders available.
+                    No Senior Team Leaders available.
                   </div>
                 ) : (
                   <select
@@ -516,7 +514,7 @@ export default function AdminApplications() {
                   >
                     <option value="">Select Senior Team Leader</option>
                     {seniorTeamLeaders.map(stl => (
-                      <option key={stl.id} value={stl.id}>{stl.user_code} — {stl.full_name}</option>
+                      <option key={stl.id} value={stl.id}>{stl.user_code} — {stl.full_name} | {stl.status}</option>
                     ))}
                   </select>
                 )}
@@ -526,7 +524,7 @@ export default function AdminApplications() {
                 <p className="text-sm mb-4">Select a Team Leader to transfer {selectedApp.full_name}'s application to:</p>
                 {teamLeaders.length === 0 ? (
                   <div className="p-4 bg-yellow-50 text-yellow-800 text-sm mb-6 rounded">
-                    No active Team Leaders available.
+                    No Team Leaders available.
                   </div>
                 ) : (
                   <select
@@ -536,7 +534,7 @@ export default function AdminApplications() {
                   >
                     <option value="">Select Team Leader</option>
                     {teamLeaders.map(tl => (
-                      <option key={tl.id} value={tl.id}>{tl.user_code} — {tl.full_name}</option>
+                      <option key={tl.id} value={tl.id}>{tl.user_code} — {tl.full_name} | {tl.status}</option>
                     ))}
                   </select>
                 )}
