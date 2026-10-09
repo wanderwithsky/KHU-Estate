@@ -46,9 +46,19 @@ export default function Login() {
 
     // Convert login ID to our internal auth email format if it's not already an email
     const loginString = email.trim();
-    const authEmail = loginString.includes('@') ? loginString : `${loginString.toLowerCase()}@khu-internal.local`;
+    let authEmail = loginString.includes('@') ? loginString : `${loginString.toLowerCase()}@khu-internal.local`;
 
     try {
+      if (!loginString.includes('@')) {
+        // Securely lookup the actual auth email for this Login ID via RPC
+        const { data: mappedEmail, error: rpcError } = await supabase
+          .rpc('get_auth_email_by_login_id', { p_login_id: loginString });
+          
+        if (!rpcError && mappedEmail) {
+          authEmail = mappedEmail;
+        }
+      }
+
       const { error: authError, data: authData } = await supabase.auth.signInWithPassword({
         email: authEmail,
         password,

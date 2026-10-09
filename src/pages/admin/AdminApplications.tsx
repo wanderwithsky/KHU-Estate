@@ -341,139 +341,142 @@ export default function AdminApplications() {
       {/* Modals go here */}
       {showApproveModal && selectedApp && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+          <div className="bg-white rounded-lg max-w-lg w-full p-6 relative max-h-[90vh] flex flex-col">
             <button 
               onClick={handleCloseModal}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold flex-shrink-0"
+              aria-label="Close modal"
             >
               &times;
             </button>
-            <h2 className="text-xl font-serif text-brand-deep-navy mb-4">
+            <h2 className="text-xl font-serif text-brand-deep-navy mb-4 pr-6 flex-shrink-0">
               {success ? 'Account Created Successfully' : `Create ID & Password for ${selectedApp.full_name}`}
             </h2>
             
-            {errorMsg && (
-              <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded mb-6 text-sm">
-                <strong>Error:</strong> {errorMsg}
-              </div>
-            )}
+            <div className="overflow-y-auto flex-grow pr-1">
+              {errorMsg && (
+                <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded mb-6 text-sm">
+                  <strong>Error:</strong> {errorMsg}
+                </div>
+              )}
 
-            {success && createdCredentials ? (
-              <div className="space-y-4 mb-6">
-                <div className="bg-green-50 text-green-800 p-4 rounded text-sm font-medium border border-green-200">
-                  {success}
-                </div>
-                <div className="bg-gray-50 p-4 rounded border border-gray-200 space-y-3 text-sm">
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="text-gray-500 font-medium">Name:</span>
-                    <span className="col-span-2 font-semibold">{createdCredentials.name}</span>
+              {success && createdCredentials ? (
+                <div className="space-y-4 mb-2">
+                  <div className="bg-green-50 text-green-800 p-4 rounded text-sm font-medium border border-green-200">
+                    {success}
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="text-gray-500 font-medium">Login ID:</span>
-                    <span className="col-span-2 font-semibold text-brand-architectural-blue">{createdCredentials.userCode}</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="text-gray-500 font-medium">Email:</span>
-                    <span className="col-span-2">{createdCredentials.email}</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 items-center">
-                    <span className="text-gray-500 font-medium">Password:</span>
-                    <div className="col-span-2 flex items-center gap-2">
-                      <span className="font-mono bg-white px-2 py-1 border rounded flex-1">
-                        {showPassword ? createdCredentials.temporaryPassword : '••••••••••••'}
-                      </span>
-                      <button 
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="text-xs text-brand-architectural-blue hover:underline"
-                      >
-                        {showPassword ? 'Hide' : 'Show'}
-                      </button>
-                      <button 
-                        onClick={handleCopyPassword}
-                        className="text-xs text-gray-500 hover:text-gray-800"
-                        title="Copy Password"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                      </button>
+                  <div className="bg-gray-50 p-4 rounded border border-gray-200 space-y-3 text-sm">
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="text-gray-500 font-medium">Name:</span>
+                      <span className="col-span-2 font-semibold break-words">{createdCredentials.name}</span>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="text-gray-500 font-medium">Role:</span>
-                    <span className="col-span-2">{createdCredentials.role}</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="text-gray-500 font-medium">Manager:</span>
-                    <span className="col-span-2">{createdCredentials.manager}</span>
-                  </div>
-                </div>
-                <p className="text-xs text-brand-charcoal font-medium mt-2">
-                  Account is ready for login.
-                </p>
-                <button 
-                  onClick={handleCopyCredentials}
-                  className="w-full mt-4 bg-brand-deep-navy text-white py-2 rounded text-sm hover:bg-brand-charcoal transition-colors"
-                >
-                  Copy Credentials
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4 mb-6">
-                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded border">
-                  <div>
-                    <p className="text-xs text-brand-charcoal/60 uppercase">Email</p>
-                    <p className="font-medium text-sm">{selectedApp.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-brand-charcoal/60 uppercase">Mobile</p>
-                    <p className="font-medium text-sm">{selectedApp.phone}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-xs text-brand-charcoal/60 uppercase">Team Leader</p>
-                    <p className="font-medium text-sm">{selectedApp.assigned_tl ? formatUser(selectedApp.assigned_tl.user_code, selectedApp.assigned_tl.full_name) : 'Not Assigned'}</p>
-                  </div>
-                </div>
-                
-                <div className="pt-4 border-t border-gray-200">
-                  <h3 className="text-sm font-semibold mb-3">Define Login Credentials</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Login ID / Username *</label>
-                      <input 
-                        type="text" 
-                        value={manualLoginId}
-                        onChange={(e) => setManualLoginId(e.target.value)}
-                        placeholder="e.g. AS1001 or john.doe"
-                        className="w-full border border-gray-300 rounded p-2 text-sm focus:ring-brand-architectural-blue focus:border-brand-architectural-blue outline-none"
-                      />
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="text-gray-500 font-medium">Login ID:</span>
+                      <span className="col-span-2 font-semibold text-brand-architectural-blue break-words">{createdCredentials.userCode}</span>
                     </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Password *</label>
-                      <div className="relative">
-                        <input 
-                          type={showPassword ? "text" : "password"} 
-                          value={manualPassword}
-                          onChange={(e) => setManualPassword(e.target.value)}
-                          placeholder="Enter a secure password"
-                          className="w-full border border-gray-300 rounded p-2 text-sm focus:ring-brand-architectural-blue focus:border-brand-architectural-blue outline-none"
-                        />
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="text-gray-500 font-medium">Email:</span>
+                      <span className="col-span-2 break-words">{createdCredentials.email}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 items-center">
+                      <span className="text-gray-500 font-medium">Password:</span>
+                      <div className="col-span-2 flex items-center gap-2">
+                        <span className="font-mono bg-white px-2 py-1 border rounded flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                          {showPassword ? createdCredentials.temporaryPassword : '••••••••••••'}
+                        </span>
                         <button 
-                          type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-800"
+                          className="text-xs text-brand-architectural-blue hover:underline whitespace-nowrap flex-shrink-0"
                         >
                           {showPassword ? 'Hide' : 'Show'}
                         </button>
+                        <button 
+                          onClick={handleCopyPassword}
+                          className="text-xs text-gray-500 hover:text-gray-800 flex-shrink-0"
+                          title="Copy Password"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="text-gray-500 font-medium">Role:</span>
+                      <span className="col-span-2">{createdCredentials.role}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="text-gray-500 font-medium">Manager:</span>
+                      <span className="col-span-2 break-words">{createdCredentials.manager}</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-brand-charcoal font-medium mt-2">
+                    Account is ready for login.
+                  </p>
+                  <button 
+                    onClick={handleCopyCredentials}
+                    className="w-full mt-4 bg-brand-deep-navy text-white py-2 rounded text-sm hover:bg-brand-charcoal transition-colors shadow-sm"
+                  >
+                    Copy Credentials
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-6 mb-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded border border-gray-200">
+                    <div className="min-w-0">
+                      <p className="text-xs text-brand-charcoal/60 uppercase tracking-wider mb-1">Email</p>
+                      <p className="font-medium text-sm break-words">{selectedApp.email}</p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-brand-charcoal/60 uppercase tracking-wider mb-1">Mobile</p>
+                      <p className="font-medium text-sm break-words">{selectedApp.phone}</p>
+                    </div>
+                    <div className="col-span-1 sm:col-span-2 min-w-0">
+                      <p className="text-xs text-brand-charcoal/60 uppercase tracking-wider mb-1">Team Leader</p>
+                      <p className="font-medium text-sm break-words">{selectedApp.assigned_tl ? formatUser(selectedApp.assigned_tl.user_code, selectedApp.assigned_tl.full_name) : 'Not Assigned'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-gray-200">
+                    <h3 className="text-sm font-semibold mb-4 text-brand-deep-navy">Define Login Credentials</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1.5">Login ID / Username *</label>
+                        <input 
+                          type="text" 
+                          value={manualLoginId}
+                          onChange={(e) => setManualLoginId(e.target.value)}
+                          placeholder="e.g. AS1001 or john.doe"
+                          className="w-full border border-gray-300 rounded-md p-2.5 text-sm focus:ring-brand-architectural-blue focus:border-brand-architectural-blue outline-none transition-colors shadow-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1.5">Password *</label>
+                        <div className="relative">
+                          <input 
+                            type={showPassword ? "text" : "password"} 
+                            value={manualPassword}
+                            onChange={(e) => setManualPassword(e.target.value)}
+                            placeholder="Enter a secure password"
+                            className="w-full border border-gray-300 rounded-md p-2.5 pr-14 text-sm focus:ring-brand-architectural-blue focus:border-brand-architectural-blue outline-none transition-colors shadow-sm"
+                          />
+                          <button 
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-brand-architectural-blue hover:text-brand-deep-navy px-1"
+                          >
+                            {showPassword ? 'Hide' : 'Show'}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6 pt-4 border-t border-gray-100 flex-shrink-0">
               <button 
                 onClick={handleCloseModal}
-                className="px-4 py-2 text-sm text-brand-charcoal hover:bg-gray-100 rounded border"
+                className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-brand-charcoal hover:bg-gray-100 rounded-md border border-gray-300 transition-colors"
               >
                 CLOSE
               </button>
@@ -481,7 +484,7 @@ export default function AdminApplications() {
                 <button 
                   onClick={handleApprove}
                   disabled={processing || !manualLoginId.trim() || !manualPassword.trim()}
-                  className="px-4 py-2 text-sm bg-brand-architectural-blue text-white rounded hover:bg-brand-deep-navy disabled:opacity-50"
+                  className="w-full sm:w-auto px-6 py-2.5 text-sm font-medium bg-brand-architectural-blue text-white rounded-md hover:bg-brand-deep-navy disabled:opacity-50 transition-colors shadow-sm"
                 >
                   {processing ? 'CREATING...' : 'CREATE ACCOUNT'}
                 </button>

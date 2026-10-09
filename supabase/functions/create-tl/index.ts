@@ -155,13 +155,15 @@ serve(async (req) => {
     })
     
     // 11. Create Email Log (for future integration)
-    await supabaseClient.from('email_logs').insert({
-      recipient_email: finalEmail,
-      template_name: 'WELCOME_CREDENTIALS',
-      subject: 'Welcome to KHU Developers',
-      status: 'QUEUED',
-      metadata: { role: 'TEAM_LEADER', userCode }
-    })
+    if (finalEmail) {
+      await supabaseClient.from('email_logs').insert({
+        recipient_email: finalEmail,
+        template_name: 'WELCOME_CREDENTIALS',
+        subject: 'Welcome to KHU Developers',
+        status: 'QUEUED',
+        metadata: { role: 'TEAM_LEADER', userCode }
+      })
+    }
 
     return new Response(
       JSON.stringify({ 

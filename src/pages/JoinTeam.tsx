@@ -97,7 +97,7 @@ export default function JoinTeam() {
           application_number: applicationNumber,
           full_name: formData.fullName,
           phone: formData.phone,
-          email: formData.email,
+          email: formData.email.trim() || null,
           city: formData.city,
           message: formData.message,
           referral_code: formData.referralCode.trim() || null,
@@ -208,10 +208,9 @@ export default function JoinTeam() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[11px] tracking-[0.1em] uppercase text-brand-charcoal font-medium">Email *</label>
+                    <label className="text-[11px] tracking-[0.1em] uppercase text-brand-charcoal font-medium">Email</label>
                     <input 
                       type="email" 
-                      required
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       className="w-full border border-brand-soft-grey bg-brand-off-white px-4 py-3.5 rounded-lg focus:outline-none focus:border-brand-architectural-blue focus:bg-white transition-colors text-sm" 
