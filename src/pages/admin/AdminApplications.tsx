@@ -26,6 +26,8 @@ export default function AdminApplications() {
   const [errorMsg, setErrorMsg] = useState('');
   const [createdCredentials, setCreatedCredentials] = useState<any>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [manualLoginId, setManualLoginId] = useState('');
+  const [manualPassword, setManualPassword] = useState('');
 
   useEffect(() => {
     if (profile?.role === 'ADMIN') {
@@ -66,6 +68,10 @@ export default function AdminApplications() {
 
   const handleApprove = async () => {
     if (!selectedApp) return;
+    if (!manualLoginId.trim() || !manualPassword.trim()) {
+      setErrorMsg('Login ID and Password are required.');
+      return;
+    }
     setProcessing(true);
     setErrorMsg('');
     setSuccess('');
@@ -79,7 +85,9 @@ export default function AdminApplications() {
       const { data, error: invokeError } = await supabase.functions.invoke(edgeFunction, {
         body: {
           applicationId: selectedApp.id,
-          isAdminApproval: true // Special flag for Edge function
+          isAdminApproval: true, // Special flag for Edge function
+          loginId: manualLoginId.trim(),
+          password: manualPassword
         }
       });
 
@@ -122,6 +130,8 @@ export default function AdminApplications() {
     setErrorMsg('');
     setCreatedCredentials(null);
     setSelectedApp(null);
+    setManualLoginId('');
+    setManualPassword('');
   };
 
   const handleCopyCredentials = () => {
@@ -359,7 +369,7 @@ export default function AdminApplications() {
                     <span className="col-span-2 font-semibold">{createdCredentials.name}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
-                    <span className="text-gray-500 font-medium">User ID:</span>
+                    <span className="text-gray-500 font-medium">Login ID:</span>
                     <span className="col-span-2 font-semibold text-brand-architectural-blue">{createdCredentials.userCode}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
@@ -396,8 +406,8 @@ export default function AdminApplications() {
                     <span className="col-span-2">{createdCredentials.manager}</span>
                   </div>
                 </div>
-                <p className="text-xs text-red-600 font-medium mt-2">
-                  * The user must change their temporary password after their first login.
+                <p className="text-xs text-brand-charcoal font-medium mt-2">
+                  Account is ready for login.
                 </p>
                 <button 
                   onClick={handleCopyCredentials}
@@ -408,17 +418,54 @@ export default function AdminApplications() {
               </div>
             ) : (
               <div className="space-y-4 mb-6">
-                <div>
-                  <p className="text-xs text-brand-charcoal/60 uppercase">Email</p>
-                  <p className="font-medium">{selectedApp.email}</p>
+                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded border">
+                  <div>
+                    <p className="text-xs text-brand-charcoal/60 uppercase">Email</p>
+                    <p className="font-medium text-sm">{selectedApp.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-brand-charcoal/60 uppercase">Mobile</p>
+                    <p className="font-medium text-sm">{selectedApp.phone}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-xs text-brand-charcoal/60 uppercase">Team Leader</p>
+                    <p className="font-medium text-sm">{selectedApp.assigned_tl ? formatUser(selectedApp.assigned_tl.user_code, selectedApp.assigned_tl.full_name) : 'Not Assigned'}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-brand-charcoal/60 uppercase">Mobile</p>
-                  <p className="font-medium">{selectedApp.phone}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-brand-charcoal/60 uppercase">Team Leader</p>
-                  <p className="font-medium">{selectedApp.assigned_tl ? formatUser(selectedApp.assigned_tl.user_code, selectedApp.assigned_tl.full_name) : 'Not Assigned'}</p>
+                
+                <div className="pt-4 border-t border-gray-200">
+                  <h3 className="text-sm font-semibold mb-3">Define Login Credentials</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Login ID / Username *</label>
+                      <input 
+                        type="text" 
+                        value={manualLoginId}
+                        onChange={(e) => setManualLoginId(e.target.value)}
+                        placeholder="e.g. AS1001 or john.doe"
+                        className="w-full border border-gray-300 rounded p-2 text-sm focus:ring-brand-architectural-blue focus:border-brand-architectural-blue outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Password *</label>
+                      <div className="relative">
+                        <input 
+                          type={showPassword ? "text" : "password"} 
+                          value={manualPassword}
+                          onChange={(e) => setManualPassword(e.target.value)}
+                          placeholder="Enter a secure password"
+                          className="w-full border border-gray-300 rounded p-2 text-sm focus:ring-brand-architectural-blue focus:border-brand-architectural-blue outline-none"
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-800"
+                        >
+                          {showPassword ? 'Hide' : 'Show'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -433,10 +480,10 @@ export default function AdminApplications() {
               {!success && (
                 <button 
                   onClick={handleApprove}
-                  disabled={processing}
+                  disabled={processing || !manualLoginId.trim() || !manualPassword.trim()}
                   className="px-4 py-2 text-sm bg-brand-architectural-blue text-white rounded hover:bg-brand-deep-navy disabled:opacity-50"
                 >
-                  {processing ? 'CREATING...' : 'CREATE ID & PASSWORD'}
+                  {processing ? 'CREATING...' : 'CREATE ACCOUNT'}
                 </button>
               )}
             </div>

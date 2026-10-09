@@ -44,16 +44,20 @@ export default function Login() {
     setLoading(true);
     setError('');
 
+    // Convert login ID to our internal auth email format if it's not already an email
+    const loginString = email.trim();
+    const authEmail = loginString.includes('@') ? loginString : `${loginString.toLowerCase()}@khu-internal.local`;
+
     try {
       const { error: authError, data: authData } = await supabase.auth.signInWithPassword({
-        email,
+        email: authEmail,
         password,
       });
 
       if (authError) {
         console.error('Supabase Auth Error:', authError.message, authError.status);
         if (authError.message === 'Invalid login credentials') {
-          throw new Error('Invalid email or password. Please check your credentials and try again.');
+          throw new Error('Invalid Login ID or password. Please check your credentials and try again.');
         }
         throw new Error(authError.message);
       }
@@ -104,9 +108,9 @@ export default function Login() {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-xs tracking-[0.1em] uppercase text-brand-charcoal font-medium">Email Address</label>
+            <label className="text-xs tracking-[0.1em] uppercase text-brand-charcoal font-medium">Login ID / Username</label>
             <input 
-              type="email" 
+              type="text" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full border border-brand-soft-grey bg-brand-off-white px-4 py-3 focus:outline-none focus:border-brand-primary focus:bg-white transition-colors" 

@@ -38,8 +38,9 @@ serve(async (req) => {
     }
 
     // 3. Parse request
-    const { applicationId } = await req.json()
+    const { applicationId, loginId, password } = await req.json()
     if (!applicationId) throw new Error('Missing applicationId')
+    if (!loginId || !password) throw new Error('Missing loginId or password')
 
     // 4. Verify Application Ownership & Status
     const { data: application, error: applicationError } = await supabaseClient
@@ -61,110 +62,60 @@ serve(async (req) => {
       }
     }
 
-    // First check if profile already exists for this email (Case B/C/D)
-    const { data: existingProfile } = await supabaseClient
-      .from('user_profiles')
-      .select('*')
-      .eq('email', application.email)
-      .maybeSingle()
+    // 5. Create Auth Identity using the provided loginId
+    // If loginId is not an email, we create a valid email format for Supabase Auth
+    const loginString = loginId.trim();
+    const authEmail = loginString.includes('@') ? loginString : `${loginString.toLowerCase()}@khu-internal.local`;
+    const tempPassword = password;
+    
+    const { data: newAuthUser, error: createAuthError } = await supabaseClient.auth.admin.createUser({
+      email: authEmail,
+      password: tempPassword,
+      email_confirm: true
+    })
 
-    let authUserId = null;
-    let targetProfileId = null;
-    let userCode = null;
-    let tempPassword = crypto.randomUUID().slice(0, 12) + "A1!";
-
-    if (existingProfile) {
-      if (existingProfile.role !== 'ASSOCIATE') {
-        throw new Error(`Conflict: A user with this email exists as a ${existingProfile.role}. Role conversion is not permitted automatically.`);
+    if (createAuthError) {
+      if (createAuthError.message.includes('already registered')) {
+         throw new Error('That Login ID / Username is already taken. Please choose another one.');
       }
-      targetProfileId = existingProfile.id;
-      authUserId = existingProfile.auth_user_id;
-      userCode = existingProfile.user_code;
-
-      const { error: updateAuthError } = await supabaseClient.auth.admin.updateUserById(
-          authUserId,
-          { password: tempPassword }
-      );
-      if (updateAuthError) throw new Error(`Failed to reset password for existing account: ${updateAuthError.message}`);
-      
-      await supabaseClient.from('user_profiles').update({ must_change_password: true }).eq('id', targetProfileId);
-
-    } else {
-      let isRecovery = false;
-
-      // 6. Create Auth Identity
-      const { data: newAuthUser, error: createAuthError } = await supabaseClient.auth.admin.createUser({
-        email: application.email,
-        password: tempPassword,
-        email_confirm: true
-      })
-
-      if (createAuthError) {
-          if (createAuthError.message.includes('already registered') || createAuthError.status === 422 || createAuthError.code === 'user_already_exists') {
-              // Case C: Auth account exists but profile is missing
-              const { data: listData, error: listError } = await supabaseClient.auth.admin.listUsers();
-              if (listError) throw new Error('Failed to retrieve existing auth user');
-              
-              const existingAuthUser = listData.users.find((u: any) => u.email === application.email);
-              if (!existingAuthUser) {
-                  throw new Error('Email registered but user cannot be found for reconciliation.');
-              }
-              
-              const { error: updateAuthError } = await supabaseClient.auth.admin.updateUserById(
-                  existingAuthUser.id,
-                  { password: tempPassword, email_confirm: true }
-              );
-              
-              if (updateAuthError) throw new Error(`Failed to update existing auth account: ${updateAuthError.message}`);
-              
-              authUserId = existingAuthUser.id;
-              isRecovery = true;
-          } else {
-              throw new Error(createAuthError.message)
-          }
-      } else {
-          authUserId = newAuthUser.user.id;
-      }
-
-      // 7. Generate Associate Code safely using RPC
-      const { data: userCodeData, error: codeError } = await supabaseClient
-        .rpc('generate_user_code', { role_type: 'ASSOCIATE' })
-        
-      if (codeError) throw new Error(`Failed to generate user code: ${codeError.message}`)
-      userCode = userCodeData
-      
-      const tlParentId = application.assigned_tl_id || (profile.role === 'TEAM_LEADER' ? profile.id : null);
-      const stlParentId = application.assigned_stl_id || (profile.role === 'TEAM_LEADER' ? profile.senior_tl_id : null);
-
-      // 8. Create User Profile
-      const { data: newProfile, error: insertProfileError } = await supabaseClient
-        .from('user_profiles')
-        .insert({
-          auth_user_id: authUserId,
-          user_code: userCode,
-          role: 'ASSOCIATE',
-          full_name: application.full_name,
-          email: application.email,
-          mobile: application.phone,
-          city: application.city,
-          parent_user_id: tlParentId,
-          senior_tl_id: stlParentId,
-          team_id: profile.role === 'TEAM_LEADER' ? profile.team_id : null,
-          sponsor_id: application.sponsor_id || tlParentId,
-          must_change_password: true,
-          status: 'ACTIVE'
-        })
-        .select('id').single()
-
-      if (insertProfileError || !newProfile) {
-        if (!isRecovery && authUserId) {
-          await supabaseClient.auth.admin.deleteUser(authUserId)
-        }
-        throw new Error(insertProfileError?.message || 'Failed to create profile')
-      }
-      
-      targetProfileId = newProfile.id;
+      throw new Error(`Failed to create Auth account: ${createAuthError.message}`)
     }
+
+    const authUserId = newAuthUser.user.id;
+    const userCode = loginString;
+    
+    const tlParentId = application.assigned_tl_id || (profile.role === 'TEAM_LEADER' ? profile.id : null);
+    const stlParentId = application.assigned_stl_id || (profile.role === 'TEAM_LEADER' ? profile.senior_tl_id : null);
+
+    // 6. Create User Profile
+    const { data: newProfile, error: insertProfileError } = await supabaseClient
+      .from('user_profiles')
+      .insert({
+        auth_user_id: authUserId,
+        user_code: userCode,
+        role: 'ASSOCIATE',
+        full_name: application.full_name,
+        email: application.email,
+        mobile: application.phone,
+        city: application.city,
+        parent_user_id: tlParentId,
+        senior_tl_id: stlParentId,
+        team_id: profile.role === 'TEAM_LEADER' ? profile.team_id : null,
+        sponsor_id: application.sponsor_id || tlParentId,
+        must_change_password: true,
+        status: 'ACTIVE'
+      })
+      .select('id').single()
+
+    if (insertProfileError || !newProfile) {
+      await supabaseClient.auth.admin.deleteUser(authUserId)
+      if (insertProfileError?.message?.includes('duplicate key value violates unique constraint')) {
+          throw new Error('That Login ID / Username is already taken by another account.');
+      }
+      throw new Error(insertProfileError?.message || 'Failed to create profile')
+    }
+    
+    const targetProfileId = newProfile.id;
 
     // 9. Update Application Status
     if (application.status !== 'ACCOUNT_CREATED') {
@@ -188,29 +139,27 @@ serve(async (req) => {
       })
     }
 
-    if (!existingProfile) {
-      // 11. Write Audit Log
-      await supabaseClient.from('audit_logs').insert({
-        actor_user_id: profile.id,
-        action: 'CREATED_ASSOCIATE',
-        module: 'USERS',
-        new_value: { userCode, email: application.email, role: 'ASSOCIATE' }
-      })
+    // 11. Write Audit Log
+    await supabaseClient.from('audit_logs').insert({
+      actor_user_id: profile.id,
+      action: 'CREATED_ASSOCIATE',
+      module: 'USERS',
+      new_value: { userCode, email: application.email, role: 'ASSOCIATE' }
+    })
 
-      // 12. Create Email Log 
-      await supabaseClient.from('email_logs').insert({
-          recipient_email: application.email,
-          template_name: 'ASSOCIATE_WELCOME_CREDENTIALS',
-          subject: 'Welcome to KHU Developers - Your Associate Credentials',
-          status: 'QUEUED',
-          metadata: { userCode, tempPassword }
-      })
-    }
+    // 12. Create Email Log 
+    await supabaseClient.from('email_logs').insert({
+        recipient_email: application.email,
+        template_name: 'ASSOCIATE_WELCOME_CREDENTIALS',
+        subject: 'Welcome to KHU Developers - Your Associate Credentials',
+        status: 'QUEUED',
+        metadata: { userCode, tempPassword }
+    })
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: existingProfile ? 'Account linked successfully' : 'Account created successfully', 
+        message: 'Account created successfully', 
         userId: authUserId,
         userCode: userCode,
         email: application.email,
