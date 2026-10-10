@@ -47,7 +47,7 @@ export default function AdminBusiness() {
     try {
       const usersRes = await supabase
         .from('user_profiles')
-        .select('id, user_code, full_name, role')
+        .select('id, user_code, full_name, role, parent_user_id, senior_tl_id')
         .in('role', ['SENIOR_TL', 'TEAM_LEADER', 'ASSOCIATE'])
         .eq('status', 'ACTIVE')
         .order('user_code');
@@ -62,6 +62,7 @@ export default function AdminBusiness() {
           *, 
           client:client_id(name, phone, client_number),
           project:project_id(name),
+          assigned_user:assigned_user_id(user_code, full_name, role),
           associate:associate_id(user_code, full_name, role),
           tl:tl_id(user_code, full_name, role),
           stl:stl_id(user_code, full_name, role)
@@ -71,11 +72,11 @@ export default function AdminBusiness() {
       if (!recordsRes.error) {
         const mappedRecords = (recordsRes.data || []).map((r: any) => ({
           ...r,
-          customer_name: r.client?.name || 'N/A',
-          phone: r.client?.phone || 'N/A',
-          project_name: r.project?.name || 'N/A',
-          user_profiles: r.associate || r.tl || r.stl || undefined,
-          assigned_user_id: r.associate_id || r.tl_id || r.stl_id
+          customer_name: r.customer_name || r.client?.name || 'N/A',
+          phone: r.phone || r.client?.phone || 'N/A',
+          project_name: r.project_name || r.project?.name || 'N/A',
+          user_profiles: r.assigned_user || r.associate || r.tl || r.stl || undefined,
+          assigned_user_id: r.assigned_user_id || r.associate_id || r.tl_id || r.stl_id
         }));
         setRecords(mappedRecords);
       }
@@ -168,8 +169,30 @@ export default function AdminBusiness() {
         throw new Error('Balance Amount cannot be negative.');
       }
       
+      const assignedUserObj = users.find(u => u.id === formData.assigned_user_id);
+      
+      let tl_id = null;
+      let stl_id = null;
+      
+      if (assignedUserObj) {
+        if (assignedUserObj.role === 'ASSOCIATE') {
+          tl_id = assignedUserObj.parent_user_id;
+          stl_id = assignedUserObj.senior_tl_id;
+        } else if (assignedUserObj.role === 'TEAM_LEADER') {
+          tl_id = assignedUserObj.id;
+          stl_id = assignedUserObj.parent_user_id;
+        } else if (assignedUserObj.role === 'SENIOR_TL') {
+          stl_id = assignedUserObj.id;
+        }
+      }
+
       const payload = {
         associate_id: formData.assigned_user_id,
+        assigned_user_id: formData.assigned_user_id,
+        tl_id: tl_id,
+        stl_id: stl_id,
+        customer_name: formData.customer_name,
+        project_name: formData.project_name,
         phone: formData.phone,
         address: formData.address,
         area_sqft: Number(formData.area_sqft),
@@ -180,8 +203,6 @@ export default function AdminBusiness() {
         balance_amount: Number(formData.balance_amount),
         notes: formData.remarks
       };
-      
-      const assignedUserObj = users.find(u => u.id === payload.assigned_user_id);
       let res;
       if (currentRecord) {
         res = await supabase
@@ -191,7 +212,7 @@ export default function AdminBusiness() {
           .select(`*, associate:associate_id(user_code, full_name, role)`)
           .single();
           
-        const oldAssignedUser = currentRecord.assigned_user_id !== payload.assigned_user_id;
+        const oldAssignedUser = currentRecord.assigned_user_id !== payload.associate_id;
         if (oldAssignedUser) {
           await supabase.from('audit_logs').insert({
             action: 'ADMIN_REASSIGNED_BUSINESS_RECORD',
@@ -201,7 +222,7 @@ export default function AdminBusiness() {
             entity_type: 'BUSINESS',
             new_data: { 
               old_assigned: currentRecord.assigned_user_id, 
-              new_assigned: payload.assigned_user_id,
+              new_assigned: payload.associate_id,
               admin_code: adminProfile?.user_code,
               admin_name: adminProfile?.full_name,
               assigned_user_code: assignedUserObj?.user_code,
@@ -217,7 +238,7 @@ export default function AdminBusiness() {
             entity_type: 'BUSINESS',
             new_data: { 
               old_assigned: currentRecord.assigned_user_id, 
-              new_assigned: payload.assigned_user_id 
+              new_assigned: payload.associate_id 
             }
           });
         }
@@ -239,7 +260,7 @@ export default function AdminBusiness() {
             entity_id: res.data.id,
             entity_type: 'BUSINESS',
             new_data: { 
-              assigned_to: payload.assigned_user_id,
+              assigned_to: payload.associate_id,
               admin_code: adminProfile?.user_code,
               admin_name: adminProfile?.full_name,
               assigned_user_code: assignedUserObj?.user_code,

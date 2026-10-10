@@ -59,19 +59,14 @@ const SENIOR_TL_MENU: NavSection[] = [
       { name: 'Dashboard', path: '/senior-team-leader', icon: LayoutDashboard },
       { name: 'My Team', path: '/senior-team-leader/team', icon: Users }
   ]},
-  { label: 'Team', items: [
-      { name: 'Associates', path: '/senior-team-leader/associates', icon: Users },
-  ]},
-  { label: 'SELF PERFORMANCE', items: [] },
   { label: 'Performance', items: [
+      { name: 'Self Performance', path: '/senior-team-leader/self-performance', icon: Activity },
       { name: 'Team Performance', path: '/senior-team-leader/performance', icon: Activity },
       { name: 'Total Business', path: '/senior-team-leader/business', icon: Briefcase },
       { name: 'Total Visits', path: '/senior-team-leader/visits', icon: MapPin },
   ]},
   { label: 'Reports', items: [
       { name: 'Income Report', path: '/senior-team-leader/reports-income', icon: FileText },
-      { name: 'Business Report', path: '/senior-team-leader/reports-business', icon: FileText },
-      { name: 'Visit Report', path: '/senior-team-leader/reports-visits', icon: FileText },
   ]},
   { label: 'Profile', items: [
       { name: 'My Profile', path: '/senior-team-leader/profile', icon: User },

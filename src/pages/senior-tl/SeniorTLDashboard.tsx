@@ -18,8 +18,7 @@ export default function SeniorTLDashboard() {
   
   const [applications, setApplications] = useState<any[]>([]);
   const [myTeam, setMyTeam] = useState<any[]>([]);
-  const [myAssociates, setMyAssociates] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
   
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [showApproveModal, setShowApproveModal] = useState(false);
@@ -81,8 +80,7 @@ export default function SeniorTLDashboard() {
         }
         
         setMyTeam(tlsList);
-        setMyAssociates(associatesList);
-
+        
         // Fetch Applications assigned to this STL
         const { data: apps } = await supabase
           .from('associate_applications')
@@ -318,78 +316,7 @@ export default function SeniorTLDashboard() {
           </div>
         </div>
         
-        {/* My Associates */}
-        <div className="xl:col-span-2 bg-white rounded-lg shadow-sm border border-brand-soft-grey overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-brand-off-white flex justify-between items-center">
-            <h2 className="text-lg font-serif text-brand-deep-navy flex items-center gap-2">
-              My Associates
-              {myAssociates.length > 0 && (
-                <span className="bg-brand-charcoal/10 text-brand-charcoal text-xs px-2 py-0.5 rounded-full font-medium">
-                  {myAssociates.length}
-                </span>
-              )}
-            </h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="text-brand-charcoal text-[10px] uppercase tracking-wider bg-gray-50/50">
-                <tr>
-                  <th className="px-6 py-4 font-medium">Associate</th>
-                  <th className="px-6 py-4 font-medium">Status</th>
-                  <th className="px-6 py-4 font-medium">Code</th>
-                  <th className="px-6 py-4 font-medium">Assigned TL</th>
-                  <th className="px-6 py-4 font-medium text-right">Current Business</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 text-sm">
-                {myAssociates.map((assoc) => (
-                  <tr key={assoc.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-brand-charcoal/10 text-brand-charcoal flex items-center justify-center font-medium">
-                          {assoc.full_name.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="font-medium text-brand-deep-navy">{formatUser(assoc.user_code, assoc.full_name)}</div>
-                          <div className="text-xs text-brand-charcoal/60">{assoc.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded-full ${
-                        assoc.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {assoc.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 font-mono text-xs text-brand-charcoal">
-                      {assoc.user_code}
-                    </td>
-                    <td className="px-6 py-4">
-                      {assoc.parent ? (
-                        <div className="font-medium text-brand-deep-navy">
-                          {formatUser(assoc.parent.user_code, assoc.parent.full_name)}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-400 italic">Direct</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right font-medium text-brand-architectural-blue">
-                      ₹{assoc.totalBusiness?.toLocaleString('en-IN') || 0}
-                    </td>
-                  </tr>
-                ))}
-                {myAssociates.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-sm text-brand-charcoal/60">
-                      No Associates assigned to your team yet.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+
         {/* Team Performance Empty State */}
         <div className="xl:col-span-2 bg-white rounded-lg shadow-sm border border-brand-soft-grey overflow-hidden p-8 flex flex-col items-center justify-center text-center">
           <Target className="text-brand-architectural-blue/30 mb-4" size={48} />

@@ -42,6 +42,8 @@ import Settings from './pages/shared/Settings';
 import SeniorTLDashboard from './pages/senior-tl/SeniorTLDashboard';
 import SeniorTLTeam from './pages/senior-tl/SeniorTLTeam';
 import SeniorTLAssociates from './pages/senior-tl/SeniorTLAssociates';
+import SeniorTLSelfPerformance from './pages/senior-tl/SeniorTLSelfPerformance';
+import SeniorTLTeamPerformance from './pages/senior-tl/SeniorTLTeamPerformance';
 
 // Team Leader
 import TeamLeaderDashboard from './pages/team-leader/TeamLeaderDashboard';
@@ -161,14 +163,13 @@ function App() {
             <Route path="tl-applications" element={<FeatureShell title="Team Leader Apps" />} />
             <Route path="associate-applications" element={<FeatureShell title="Associate Apps" />} />
             
-            <Route path="performance" element={<FeatureShell title="Team Performance" />} />
+            <Route path="self-performance" element={<SeniorTLSelfPerformance />} />
+            <Route path="performance" element={<SeniorTLTeamPerformance />} />
             <Route path="business" element={<MyBusiness />} />
             <Route path="visits" element={<UserVisits />} />
             <Route path="my-visits" element={<UserVisits />} />
             
             <Route path="reports-income" element={<MyCommissions />} />
-            <Route path="reports-business" element={<FeatureShell title="Business Report" />} />
-            <Route path="reports-visits" element={<FeatureShell title="Visit Report" />} />
             
             <Route path="profile" element={<Profile />} />
             <Route path="notifications" element={<NotificationsCenter />} />
