@@ -84,6 +84,24 @@ export default function AdminCommissions() {
     }
   };
 
+  const handleUpdateStatus = async (id: string, newStatus: string) => {
+    let updates: any = { status: newStatus };
+    if (newStatus === 'APPROVED') updates.approved_at = new Date().toISOString();
+    if (newStatus === 'PAID') {
+      const ref = prompt('Enter payment reference (optional):');
+      if (ref !== null) updates.payment_reference = ref;
+      updates.paid_at = new Date().toISOString();
+    }
+    
+    try {
+      const { error } = await supabase.from('commissions').update(updates).eq('id', id);
+      if (error) throw error;
+      fetchCommissions();
+    } catch (err: any) {
+      alert(`Error updating status: ${err.message}`);
+    }
+  };
+
   const filteredCommissions = commissions.filter(c => {
     const matchesSearch = 
       (c.user_profiles?.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -186,6 +204,7 @@ export default function AdminCommissions() {
                   <th className="px-6 py-4 font-semibold">Total Business</th>
                   <th className="px-6 py-4 font-semibold">Status</th>
                   <th className="px-6 py-4 font-semibold">Date</th>
+                  <th className="px-6 py-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -230,6 +249,27 @@ export default function AdminCommissions() {
                     </td>
                     <td className="px-6 py-4 text-xs text-gray-500">
                       {c.businesses?.created_at ? format(new Date(c.businesses.created_at), 'dd MMM yyyy') : '-'}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      {c.status === 'PENDING' && (
+                        <button 
+                          onClick={() => handleUpdateStatus(c.id, 'APPROVED')}
+                          className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition"
+                        >
+                          Approve
+                        </button>
+                      )}
+                      {c.status === 'APPROVED' && (
+                        <button 
+                          onClick={() => handleUpdateStatus(c.id, 'PAID')}
+                          className="px-3 py-1 bg-green-600 text-white text-xs font-medium rounded hover:bg-green-700 transition"
+                        >
+                          Mark Paid
+                        </button>
+                      )}
+                      {c.status === 'PAID' && (
+                        <span className="text-xs text-gray-400 italic">Paid on {c.paid_at ? format(new Date(c.paid_at), 'dd MMM yy') : '-'}</span>
+                      )}
                     </td>
                   </tr>
                 ))}

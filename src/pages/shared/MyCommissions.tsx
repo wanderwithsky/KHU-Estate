@@ -55,6 +55,8 @@ export default function MyCommissions() {
           businesses:business_id(
             deal_amount,
             created_at,
+            customer_name,
+            project_name,
             client:client_id(name),
             project:project_id(name)
           ),
@@ -62,9 +64,8 @@ export default function MyCommissions() {
         `)
         .order('created_at', { ascending: false });
         
-      if (profile.role === 'ASSOCIATE') {
-        query = query.eq('user_id', profile.id);
-      }
+      // Enforce reading only own commissions for all roles
+      query = query.eq('user_id', profile.id);
       
       const { data, error } = await query;
         
@@ -74,8 +75,8 @@ export default function MyCommissions() {
         ...c,
         businesses: c.businesses ? {
           ...c.businesses,
-          customer_name: c.businesses.client?.name || 'N/A',
-          project_name: c.businesses.project?.name || 'N/A'
+          customer_name: c.businesses.customer_name || c.businesses.client?.name || 'N/A',
+          project_name: c.businesses.project_name || c.businesses.project?.name || 'N/A'
         } : null
       }));
       
