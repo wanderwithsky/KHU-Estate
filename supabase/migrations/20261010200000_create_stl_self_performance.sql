@@ -23,27 +23,32 @@ ALTER TABLE public.stl_self_performance ENABLE ROW LEVEL SECURITY;
 
 -- 4. Policies for stl_self_performance
 -- STLs can only see their own records
+DROP POLICY IF EXISTS "STL read own self performance" ON public.stl_self_performance;
 CREATE POLICY "STL read own self performance" ON public.stl_self_performance
 FOR SELECT TO authenticated
 USING ( stl_id IN (SELECT id FROM public.user_profiles WHERE auth_user_id = auth.uid()) );
 
 -- STLs can insert their own records
+DROP POLICY IF EXISTS "STL insert own self performance" ON public.stl_self_performance;
 CREATE POLICY "STL insert own self performance" ON public.stl_self_performance
 FOR INSERT TO authenticated
 WITH CHECK ( stl_id IN (SELECT id FROM public.user_profiles WHERE auth_user_id = auth.uid()) );
 
 -- STLs can update their own records
+DROP POLICY IF EXISTS "STL update own self performance" ON public.stl_self_performance;
 CREATE POLICY "STL update own self performance" ON public.stl_self_performance
 FOR UPDATE TO authenticated
 USING ( stl_id IN (SELECT id FROM public.user_profiles WHERE auth_user_id = auth.uid()) )
 WITH CHECK ( stl_id IN (SELECT id FROM public.user_profiles WHERE auth_user_id = auth.uid()) );
 
 -- STLs can delete their own records
+DROP POLICY IF EXISTS "STL delete own self performance" ON public.stl_self_performance;
 CREATE POLICY "STL delete own self performance" ON public.stl_self_performance
 FOR DELETE TO authenticated
 USING ( stl_id IN (SELECT id FROM public.user_profiles WHERE auth_user_id = auth.uid()) );
 
 -- Admin can see all (optional, but good practice for CRM)
+DROP POLICY IF EXISTS "Admin full access self performance" ON public.stl_self_performance;
 CREATE POLICY "Admin full access self performance" ON public.stl_self_performance
 FOR ALL TO authenticated
 USING ( (SELECT role FROM public.user_profiles WHERE auth_user_id = auth.uid()) = 'ADMIN' );

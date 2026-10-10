@@ -51,12 +51,32 @@ export default function SeniorTLTeamPerformance() {
     if (!profile?.id) return;
     setLoading(true);
     try {
-      // Fetch Team Profiles (downline)
-      const { data: profiles } = await supabase
+      // 1. Fetch TLs reporting to this STL
+      const { data: tls } = await supabase
         .from('user_profiles')
-        .select('id, user_code, full_name, role, parent_user_id')
-        .eq('senior_tl_id', profile.id)
-        .neq('id', profile.id);
+        .select('id, user_code, full_name, role, parent_user_id, senior_tl_id')
+        .or(`parent_user_id.eq.${profile.id},senior_tl_id.eq.${profile.id}`)
+        .eq('role', 'TEAM_LEADER');
+        
+      const tlList = tls || [];
+      const tlIds = tlList.map(tl => tl.id);
+      
+      // 2. Fetch Associates reporting to those TLs, or directly to this STL
+      let assocQuery = supabase
+        .from('user_profiles')
+        .select('id, user_code, full_name, role, parent_user_id, senior_tl_id')
+        .eq('role', 'ASSOCIATE');
+        
+      if (tlIds.length > 0) {
+        assocQuery = assocQuery.or(`parent_user_id.in.(${tlIds.join(',')}),parent_user_id.eq.${profile.id},senior_tl_id.eq.${profile.id}`);
+      } else {
+        assocQuery = assocQuery.or(`parent_user_id.eq.${profile.id},senior_tl_id.eq.${profile.id}`);
+      }
+      
+      const { data: associates } = await assocQuery;
+      
+      // 3. Combine profiles
+      const profiles = [...tlList, ...(associates || [])];
         
       if (profiles && profiles.length > 0) {
         setTeamProfiles(profiles);
@@ -76,10 +96,10 @@ export default function SeniorTLTeamPerformance() {
           
         const mappedTeam = (teamData || []).map((r: any) => ({
           ...r,
-          customer_name: r.client?.name || 'N/A',
-          phone: r.client?.phone || 'N/A',
-          project_name: r.project?.name || 'N/A',
-          assigned_user_id: r.associate_id
+          customer_name: r.customer_name || r.client?.name || 'N/A',
+          phone: r.phone || r.client?.phone || 'N/A',
+          project_name: r.project_name || r.project?.name || 'N/A',
+          assigned_user_id: r.assigned_user_id || r.associate_id
         }));
         setTeamBusiness(mappedTeam);
       } else {

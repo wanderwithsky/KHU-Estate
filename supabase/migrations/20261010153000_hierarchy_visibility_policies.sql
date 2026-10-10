@@ -18,6 +18,7 @@ FOR SELECT TO authenticated USING (
 -- 2. Commissions Table Policies
 DROP POLICY IF EXISTS "Users read own commissions" ON public.commissions;
 
+DROP POLICY IF EXISTS "Users read team commissions" ON public.commissions;
 CREATE POLICY "Users read team commissions" ON public.commissions 
 FOR SELECT TO authenticated USING (
     user_id IN (
