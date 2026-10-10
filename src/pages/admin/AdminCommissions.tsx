@@ -43,7 +43,7 @@ export default function AdminCommissions() {
           user_profiles(full_name, user_code),
           businesses:business_id(customer_name, project_name, deal_amount, payment_status, created_at)
         `)
-        .order('created_at', { ascending: false });
+        .order('generated_at', { ascending: false });
         
       if (error) throw error;
       

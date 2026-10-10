@@ -62,7 +62,7 @@ export default function MyCommissions() {
           ),
           user:user_id(id, user_code, full_name, role)
         `)
-        .order('created_at', { ascending: false });
+        .order('generated_at', { ascending: false });
         
       // Enforce reading only own commissions for all roles
       query = query.eq('user_id', profile.id);
