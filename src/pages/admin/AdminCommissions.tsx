@@ -40,7 +40,7 @@ export default function AdminCommissions() {
         .from('commissions')
         .select(`
           *,
-          user_profiles:user_id(full_name, user_code),
+          user_profiles(full_name, user_code),
           businesses:business_id(customer_name, project_name, deal_amount, payment_status, created_at)
         `)
         .order('created_at', { ascending: false });

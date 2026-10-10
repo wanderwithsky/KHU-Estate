@@ -71,9 +71,21 @@ serve(async (req) => {
       throw new Error('Missing loginId or password')
     }
 
+    let existingProfile = null;
+    if (app && app.created_account_user_id) {
+        const { data: prof, error: profErr } = await supabaseClient
+            .from('user_profiles')
+            .select('*')
+            .eq('id', app.created_account_user_id)
+            .single();
+        if (!profErr && prof) {
+            existingProfile = prof;
+        }
+    }
+
     // 5. Create Auth Identity using the provided loginId
     const loginString = loginId.trim();
-    const authEmail = loginString.includes('@') ? loginString : `${loginString.toLowerCase()}@khu-internal.local`;
+    const authEmail = `${crypto.randomUUID()}@khu-internal.local`;
     const tempPassword = password;
     
     const { data: newAuthUser, error: createAuthError } = await supabaseClient.auth.admin.createUser({
@@ -92,33 +104,56 @@ serve(async (req) => {
     const authUserId = newAuthUser.user.id;
     const userCode = loginString;
 
-    // 6. Insert User Profile
-    const { data: newProfile, error: insertProfileError } = await supabaseClient
-      .from('user_profiles')
-      .insert({
-        auth_user_id: authUserId,
-        user_code: userCode,
-        role: 'SENIOR_TL',
-        full_name: finalFullName,
-        email: finalEmail,
-        mobile: finalMobile,
-        address: finalAddress,
-        joining_date: new Date().toISOString(),
-        parent_user_id: profile.id, // Admin is the parent
-        status: 'ACTIVE',
-        must_change_password: true
-      })
-      .select('id').single()
+    // 6. Create or Link User Profile
+    let targetProfileId = null;
 
-    if (insertProfileError || !newProfile) {
-      await supabaseClient.auth.admin.deleteUser(authUserId)
-      if (insertProfileError?.message?.includes('duplicate key value violates unique constraint')) {
-          throw new Error('That Login ID / Username is already taken by another account.');
-      }
-      throw new Error(insertProfileError?.message || 'Failed to create profile')
+    if (existingProfile) {
+        const { error: updateProfileError } = await supabaseClient
+            .from('user_profiles')
+            .update({ 
+                auth_user_id: authUserId, 
+                user_code: userCode, 
+                must_change_password: true,
+                role: 'SENIOR_TL',
+                status: 'ACTIVE'
+            })
+            .eq('id', existingProfile.id);
+
+        if (updateProfileError) {
+            await supabaseClient.auth.admin.deleteUser(authUserId);
+            if (updateProfileError?.message?.includes('duplicate key value violates unique constraint')) {
+                throw new Error('That Login ID / Username is already taken by another account.');
+            }
+            throw new Error(updateProfileError?.message || 'Failed to link profile');
+        }
+        targetProfileId = existingProfile.id;
+    } else {
+        const { data: newProfile, error: insertProfileError } = await supabaseClient
+          .from('user_profiles')
+          .insert({
+            auth_user_id: authUserId,
+            user_code: userCode,
+            role: 'SENIOR_TL',
+            full_name: finalFullName,
+            email: finalEmail,
+            mobile: finalMobile,
+            address: finalAddress,
+            joining_date: new Date().toISOString(),
+            parent_user_id: profile.id, // Admin is the parent
+            status: 'ACTIVE',
+            must_change_password: true
+          })
+          .select('id').single()
+
+        if (insertProfileError || !newProfile) {
+          await supabaseClient.auth.admin.deleteUser(authUserId)
+          if (insertProfileError?.message?.includes('duplicate key value violates unique constraint')) {
+              throw new Error('That Login ID / Username is already taken by another account.');
+          }
+          throw new Error(insertProfileError?.message || 'Failed to create profile')
+        }
+        targetProfileId = newProfile.id;
     }
-    
-    const targetProfileId = newProfile.id;
 
     // 9. Update Application Status (if applicable)
     if (applicationId && app && app.status !== 'ACCOUNT_CREATED') {

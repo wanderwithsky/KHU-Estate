@@ -49,7 +49,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg,woff2,woff,ttf}'],
-        navigateFallbackDenylist: [/^\/admin/, /^\/associate/, /^\/senior-tl/, /^\/team-leader/, /^\/api/],
+        navigateFallbackDenylist: [/^\/admin/, /^\/associate/, /^\/senior-tl/, /^\/team-leader/, /^\/api/, /rest\/v1/, /auth\/v1/, /graphql\/v1/],
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.destination === 'image',

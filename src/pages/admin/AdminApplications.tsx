@@ -172,6 +172,12 @@ export default function AdminApplications() {
 
   const handleTransfer = async () => {
     if (!selectedApp) return;
+
+    if (selectedApp.role_applied_for === 'Senior Team Leader') {
+      alert('STL accounts cannot be transferred.');
+      return;
+    }
+
     const isTLApp = selectedApp.role_applied_for === 'Team Leader';
     const targetId = isTLApp ? selectedStlId : selectedTlId;
 
@@ -291,7 +297,11 @@ export default function AdminApplications() {
                 </td>
                 <td className="px-6 py-4 sticky right-0 bg-white group-hover:bg-gray-50 transition-colors border-l border-gray-100 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)] z-0">
                   <div className="flex gap-2 justify-center min-w-[200px]">
-                    {app.status.includes('PENDING') && (
+                    {app.status === 'ACCOUNT_CREATED' || app.created_account_user_id ? (
+                      <span className="text-xs font-medium text-green-700 bg-green-50 px-3 py-1.5 rounded border border-green-200 shadow-sm whitespace-nowrap inline-flex items-center justify-center">
+                        Account Created
+                      </span>
+                    ) : app.status.includes('PENDING') ? (
                       <>
                         <button 
                           onClick={() => { 
@@ -307,8 +317,21 @@ export default function AdminApplications() {
                         </button>
 
                         <button 
-                          onClick={() => { setSelectedApp(app); setShowTransferModal(true); }}
-                          className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded font-medium shadow-sm transition-colors"
+                          onClick={() => {
+                            if (app.role_applied_for === 'Senior Team Leader') {
+                              alert('STL accounts cannot be transferred.');
+                              return;
+                            }
+                            setSelectedApp(app); 
+                            setShowTransferModal(true); 
+                          }}
+                          className={`text-xs px-3 py-1.5 rounded font-medium shadow-sm transition-colors ${
+                            app.role_applied_for === 'Senior Team Leader' 
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
+                            : 'bg-blue-500 hover:bg-blue-600 text-white'
+                          }`}
+                          disabled={app.role_applied_for === 'Senior Team Leader'}
+                          title={app.role_applied_for === 'Senior Team Leader' ? 'STL accounts cannot be transferred.' : ''}
                         >
                           Transfer
                         </button>
@@ -319,7 +342,7 @@ export default function AdminApplications() {
                           Decline
                         </button>
                       </>
-                    )}
+                    ) : null}
                   </div>
                 </td>
               </tr>

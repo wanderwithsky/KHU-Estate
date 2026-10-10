@@ -58,12 +58,26 @@ export default function AdminBusiness() {
 
       const recordsRes = await supabase
         .from('businesses')
-        .select(`*, user_profiles:assigned_user_id(user_code, full_name, role)`)
-        .not('customer_name', 'is', null) // Only fetch flat admin records
+        .select(`
+          *, 
+          client:client_id(name, phone, client_number),
+          project:project_id(name),
+          associate:associate_id(user_code, full_name, role),
+          tl:tl_id(user_code, full_name, role),
+          stl:stl_id(user_code, full_name, role)
+        `)
         .order('created_at', { ascending: false });
       
       if (!recordsRes.error) {
-        setRecords(recordsRes.data || []);
+        const mappedRecords = (recordsRes.data || []).map((r: any) => ({
+          ...r,
+          customer_name: r.client?.name || 'N/A',
+          phone: r.client?.phone || 'N/A',
+          project_name: r.project?.name || 'N/A',
+          user_profiles: r.associate || r.tl || r.stl || undefined,
+          assigned_user_id: r.associate_id || r.tl_id || r.stl_id
+        }));
+        setRecords(mappedRecords);
       }
     } catch (err: any) {
       console.error('Error fetching data:', err.message);
@@ -155,11 +169,9 @@ export default function AdminBusiness() {
       }
       
       const payload = {
-        assigned_user_id: formData.assigned_user_id,
-        customer_name: formData.customer_name,
+        associate_id: formData.assigned_user_id,
         phone: formData.phone,
         address: formData.address,
-        project_name: formData.project_name,
         area_sqft: Number(formData.area_sqft),
         deal_amount: Number(formData.total_amount),
         booking_amount: Number(formData.booking_amount),
@@ -176,7 +188,7 @@ export default function AdminBusiness() {
           .from('businesses')
           .update(payload)
           .eq('id', currentRecord.id)
-          .select(`*, user_profiles:assigned_user_id(user_code, full_name, role)`)
+          .select(`*, associate:associate_id(user_code, full_name, role)`)
           .single();
           
         const oldAssignedUser = currentRecord.assigned_user_id !== payload.assigned_user_id;
@@ -216,7 +228,7 @@ export default function AdminBusiness() {
             ...payload,
             created_by: adminProfile?.id
           })
-          .select(`*, user_profiles:assigned_user_id(user_code, full_name, role)`)
+          .select(`*, associate:associate_id(user_code, full_name, role)`)
           .single();
           
         if (res.data) {

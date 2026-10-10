@@ -68,11 +68,23 @@ export default function AdminAssociatePerformance() {
       // Fetch Associate's self business
       const { data: selfData } = await supabase
         .from('businesses')
-        .select('*, user_profiles:assigned_user_id(id, user_code, full_name, role)')
-        .eq('assigned_user_id', selectedAssociate)
+        .select(`
+          *,
+          client:client_id(name, phone, client_number),
+          project:project_id(name),
+          user_profiles:associate_id(id, user_code, full_name, role)
+        `)
+        .eq('associate_id', selectedAssociate)
         .order('created_at', { ascending: false });
         
-      setSelfBusiness(selfData || []);
+      const mappedSelf = (selfData || []).map((r: any) => ({
+        ...r,
+        customer_name: r.client?.name || 'N/A',
+        phone: r.client?.phone || 'N/A',
+        project_name: r.project?.name || 'N/A',
+        assigned_user_id: r.associate_id
+      }));
+      setSelfBusiness(mappedSelf);
     } catch (error) {
       console.error('Error fetching performance:', error);
     } finally {

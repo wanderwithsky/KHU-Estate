@@ -75,11 +75,23 @@ export default function AdminSTLPerformance() {
       // Fetch STL's self business
       const { data: selfData } = await supabase
         .from('businesses')
-        .select('*, user_profiles:assigned_user_id(id, user_code, full_name, role)')
-        .eq('assigned_user_id', selectedStl)
+        .select(`
+          *,
+          client:client_id(name, phone, client_number),
+          project:project_id(name),
+          user_profiles:associate_id(id, user_code, full_name, role)
+        `)
+        .eq('associate_id', selectedStl)
         .order('created_at', { ascending: false });
         
-      setSelfBusiness(selfData || []);
+      const mappedSelf = (selfData || []).map((r: any) => ({
+        ...r,
+        customer_name: r.client?.name || 'N/A',
+        phone: r.client?.phone || 'N/A',
+        project_name: r.project?.name || 'N/A',
+        assigned_user_id: r.associate_id
+      }));
+      setSelfBusiness(mappedSelf);
 
       // Fetch Team Profiles (downline)
       const { data: profiles } = await supabase
@@ -95,11 +107,23 @@ export default function AdminSTLPerformance() {
         // Fetch Team Business
         const { data: teamData } = await supabase
           .from('businesses')
-          .select('*, user_profiles:assigned_user_id(id, user_code, full_name, role)')
-          .in('assigned_user_id', profileIds)
+          .select(`
+            *,
+            client:client_id(name, phone, client_number),
+            project:project_id(name),
+            user_profiles:associate_id(id, user_code, full_name, role)
+          `)
+          .in('associate_id', profileIds)
           .order('created_at', { ascending: false });
           
-        setTeamBusiness(teamData || []);
+        const mappedTeam = (teamData || []).map((r: any) => ({
+          ...r,
+          customer_name: r.client?.name || 'N/A',
+          phone: r.client?.phone || 'N/A',
+          project_name: r.project?.name || 'N/A',
+          assigned_user_id: r.associate_id
+        }));
+        setTeamBusiness(mappedTeam);
       } else {
         setTeamProfiles([]);
         setTeamBusiness([]);

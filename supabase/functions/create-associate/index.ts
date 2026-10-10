@@ -62,10 +62,22 @@ serve(async (req) => {
       }
     }
 
+    let existingProfile = null;
+    if (application.created_account_user_id) {
+        const { data: prof, error: profErr } = await supabaseClient
+            .from('user_profiles')
+            .select('*')
+            .eq('id', application.created_account_user_id)
+            .single();
+        if (!profErr && prof) {
+            existingProfile = prof;
+        }
+    }
+
     // 5. Create Auth Identity using the provided loginId
     // If loginId is not an email, we create a valid email format for Supabase Auth
     const loginString = loginId.trim();
-    const authEmail = loginString.includes('@') ? loginString : `${loginString.toLowerCase()}@khu-internal.local`;
+    const authEmail = `${crypto.randomUUID()}@khu-internal.local`;
     const tempPassword = password;
     
     const { data: newAuthUser, error: createAuthError } = await supabaseClient.auth.admin.createUser({
@@ -87,35 +99,59 @@ serve(async (req) => {
     const tlParentId = application.assigned_tl_id || (profile.role === 'TEAM_LEADER' ? profile.id : null);
     const stlParentId = application.assigned_stl_id || (profile.role === 'TEAM_LEADER' ? profile.senior_tl_id : null);
 
-    // 6. Create User Profile
-    const { data: newProfile, error: insertProfileError } = await supabaseClient
-      .from('user_profiles')
-      .insert({
-        auth_user_id: authUserId,
-        user_code: userCode,
-        role: 'ASSOCIATE',
-        full_name: application.full_name,
-        email: application.email,
-        mobile: application.phone,
-        city: application.city,
-        parent_user_id: tlParentId,
-        senior_tl_id: stlParentId,
-        team_id: profile.role === 'TEAM_LEADER' ? profile.team_id : null,
-        sponsor_id: application.sponsor_id || tlParentId,
-        must_change_password: true,
-        status: 'ACTIVE'
-      })
-      .select('id').single()
+    // 6. Create or Link User Profile
+    let targetProfileId = null;
 
-    if (insertProfileError || !newProfile) {
-      await supabaseClient.auth.admin.deleteUser(authUserId)
-      if (insertProfileError?.message?.includes('duplicate key value violates unique constraint')) {
-          throw new Error('That Login ID / Username is already taken by another account.');
-      }
-      throw new Error(insertProfileError?.message || 'Failed to create profile')
+    if (existingProfile) {
+        const { error: updateProfileError } = await supabaseClient
+            .from('user_profiles')
+            .update({ 
+                auth_user_id: authUserId, 
+                user_code: userCode, 
+                must_change_password: true,
+                role: 'ASSOCIATE',
+                status: 'ACTIVE'
+            })
+            .eq('id', existingProfile.id);
+
+        if (updateProfileError) {
+            await supabaseClient.auth.admin.deleteUser(authUserId);
+            if (updateProfileError?.message?.includes('duplicate key value violates unique constraint')) {
+                throw new Error('That Login ID / Username is already taken by another account.');
+            }
+            throw new Error(updateProfileError?.message || 'Failed to link profile');
+        }
+        targetProfileId = existingProfile.id;
+    } else {
+        const { data: newProfile, error: insertProfileError } = await supabaseClient
+          .from('user_profiles')
+          .insert({
+            auth_user_id: authUserId,
+            user_code: userCode,
+            role: 'ASSOCIATE',
+            full_name: application.full_name,
+            email: application.email,
+            mobile: application.phone,
+            city: application.city,
+            parent_user_id: tlParentId,
+            senior_tl_id: stlParentId,
+            team_id: profile.role === 'TEAM_LEADER' ? profile.team_id : null,
+            sponsor_id: application.sponsor_id || tlParentId,
+            must_change_password: true,
+            status: 'ACTIVE'
+          })
+          .select('id').single()
+
+        if (insertProfileError || !newProfile) {
+          await supabaseClient.auth.admin.deleteUser(authUserId)
+          if (insertProfileError?.message?.includes('duplicate key value violates unique constraint')) {
+              throw new Error('That Login ID / Username is already taken by another account.');
+          }
+          throw new Error(insertProfileError?.message || 'Failed to create profile')
+        }
+        targetProfileId = newProfile.id;
     }
     
-    const targetProfileId = newProfile.id;
 
     // 9. Update Application Status
     if (application.status !== 'ACCOUNT_CREATED') {
@@ -161,7 +197,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Account created successfully', 
+        message: existingProfile ? 'Account linked successfully' : 'Account created successfully', 
         userId: authUserId,
         userCode: userCode,
         email: application.email,

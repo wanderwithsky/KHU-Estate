@@ -20,15 +20,39 @@ export default function MyBusiness() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('businesses')
-        .select(`*, user_profiles:assigned_user_id(user_code, full_name, role)`)
-        .not('customer_name', 'is', null) // Flat admin records
-        .eq('assigned_user_id', profile?.id)
+        .select(`
+          *,
+          client:client_id(name, phone, client_number),
+          project:project_id(name),
+          associate:associate_id(user_code, full_name, role),
+          tl:tl_id(user_code, full_name, role),
+          stl:stl_id(user_code, full_name, role)
+        `)
         .order('created_at', { ascending: false });
-        
+
+      if (profile.role === 'ASSOCIATE') {
+        query = query.eq('associate_id', profile.id);
+      } else if (profile.role === 'TEAM_LEADER') {
+        query = query.or(`associate_id.eq.${profile.id},tl_id.eq.${profile.id}`);
+      } else if (profile.role === 'SENIOR_TL') {
+        query = query.or(`associate_id.eq.${profile.id},tl_id.eq.${profile.id},stl_id.eq.${profile.id}`);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
-      setRecords(data || []);
+      
+      const mappedRecords = (data || []).map((r: any) => ({
+        ...r,
+        customer_name: r.client?.name || 'N/A',
+        phone: r.client?.phone || 'N/A',
+        project_name: r.project?.name || 'N/A',
+        // Optional: map user_profiles for BusinessSpreadsheet
+        user_profiles: r.associate || r.tl || r.stl || undefined
+      }));
+      
+      setRecords(mappedRecords);
     } catch (err: any) {
       console.error('Error fetching data:', err.message);
     } finally {
@@ -42,7 +66,8 @@ export default function MyBusiness() {
     return (
       record.customer_name?.toLowerCase().includes(term) ||
       record.phone?.toLowerCase().includes(term) ||
-      record.project_name?.toLowerCase().includes(term)
+      record.project_name?.toLowerCase().includes(term) ||
+      record.business_number?.toLowerCase().includes(term)
     );
   });
 

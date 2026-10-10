@@ -11,10 +11,12 @@ export default function AssociateDashboard() {
   const [seniorTL, setSeniorTL] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Mocking stats since there's no backend for these yet
+  const [income, setIncome] = useState(0);
+
+  // Mocking other stats since there's no backend for these yet
   const stats = {
     totalBusiness: 0,
-    income: 0,
+    income: income,
     totalVisits: 0,
     rewards: 0
   };
@@ -48,7 +50,38 @@ export default function AssociateDashboard() {
       }
     }
 
+    async function fetchCommissions() {
+      if (!profile) return;
+      const { data, error } = await supabase
+        .from('commissions')
+        .select('commission_amount')
+        .eq('user_id', profile.id);
+      
+      if (!error && data) {
+        const total = data.reduce((acc, curr) => acc + (Number(curr.commission_amount) || 0), 0);
+        setIncome(total);
+      }
+    }
+
     fetchHierarchy();
+    fetchCommissions();
+
+    if (profile) {
+      const channel = supabase
+        .channel(`assoc_dash_commissions_${profile.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'commissions', filter: `user_id=eq.${profile.id}` },
+          () => {
+            fetchCommissions();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [profile]);
 
   if (!profile) return null;

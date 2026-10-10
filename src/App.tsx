@@ -41,6 +41,7 @@ import Settings from './pages/shared/Settings';
 // Senior TL
 import SeniorTLDashboard from './pages/senior-tl/SeniorTLDashboard';
 import SeniorTLTeam from './pages/senior-tl/SeniorTLTeam';
+import SeniorTLAssociates from './pages/senior-tl/SeniorTLAssociates';
 
 // Team Leader
 import TeamLeaderDashboard from './pages/team-leader/TeamLeaderDashboard';
@@ -53,6 +54,7 @@ import Profile from './components/Profile';
 import AssociateDashboard from './pages/associate/AssociateDashboard';
 import AssociateTeam from './pages/associate/AssociateTeam';
 import MyBusiness from './pages/shared/MyBusiness';
+import MyCommissions from './pages/shared/MyCommissions';
 
 // Protected Route wrapper
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles: string[] }) {
@@ -154,7 +156,7 @@ function App() {
           }>
             <Route index element={<SeniorTLDashboard />} />
             <Route path="team" element={<SeniorTLTeam />} />
-            <Route path="associates" element={<FeatureShell title="My Associates" />} />
+            <Route path="associates" element={<SeniorTLAssociates />} />
             
             <Route path="tl-applications" element={<FeatureShell title="Team Leader Apps" />} />
             <Route path="associate-applications" element={<FeatureShell title="Associate Apps" />} />
@@ -164,7 +166,7 @@ function App() {
             <Route path="visits" element={<UserVisits />} />
             <Route path="my-visits" element={<UserVisits />} />
             
-            <Route path="reports-income" element={<FeatureShell title="Income Report" />} />
+            <Route path="reports-income" element={<MyCommissions />} />
             <Route path="reports-business" element={<FeatureShell title="Business Report" />} />
             <Route path="reports-visits" element={<FeatureShell title="Visit Report" />} />
             
@@ -193,7 +195,7 @@ function App() {
             
             <Route path="targets" element={<FeatureShell title="Targets" />} />
             
-            <Route path="reports-income" element={<FeatureShell title="Income Report" />} />
+            <Route path="reports-income" element={<MyCommissions />} />
             <Route path="reports-business" element={<FeatureShell title="Business Report" />} />
             <Route path="reports-visits" element={<FeatureShell title="Visit Report" />} />
             
@@ -210,7 +212,7 @@ function App() {
             <Route index element={<AssociateDashboard />} />
             <Route path="team" element={<AssociateTeam />} />
             <Route path="profile" element={<Profile />} />
-            <Route path="income" element={<FeatureShell title="Income Report" />} />
+            <Route path="income" element={<MyCommissions />} />
             <Route path="business" element={<FeatureShell title="Total Business" />} />
             <Route path="visits" element={<UserVisits />} />
             <Route path="my-visits" element={<UserVisits />} />
