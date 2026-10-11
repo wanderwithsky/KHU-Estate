@@ -4,6 +4,7 @@ import { Search, Plus, X } from 'lucide-react';
 import BusinessSpreadsheet from '../../components/BusinessSpreadsheet';
 import { formatUser } from '../../utils/formatUser';
 import { formatCurrency } from '../../utils/formatCurrency';
+import { mapBusinessRecord } from '../../utils/businessMapping';
 import UserSelector from '../../components/UserSelector';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 
@@ -70,14 +71,7 @@ export default function AdminBusiness() {
         .order('created_at', { ascending: false });
       
       if (!recordsRes.error) {
-        const mappedRecords = (recordsRes.data || []).map((r: any) => ({
-          ...r,
-          customer_name: r.customer_name || r.client?.name || 'N/A',
-          phone: r.phone || r.client?.phone || 'N/A',
-          project_name: r.project_name || r.project?.name || 'N/A',
-          user_profiles: r.assigned_user || r.associate || r.tl || r.stl || undefined,
-          assigned_user_id: r.assigned_user_id || r.associate_id || r.tl_id || r.stl_id
-        }));
+        const mappedRecords = (recordsRes.data || []).map((r: any) => mapBusinessRecord(r));
         setRecords(mappedRecords);
       }
     } catch (err: any) {
@@ -161,6 +155,16 @@ export default function AdminBusiness() {
       if (!userExists) {
         throw new Error('The selected user is no longer available. Please select another user.');
       }
+
+      if (!formData.customer_name?.trim()) {
+        throw new Error('Customer Name is required.');
+      }
+      if (!formData.phone?.trim()) {
+        throw new Error('Phone number is required.');
+      }
+      if (!formData.project_name?.trim()) {
+        throw new Error('Project Name is required.');
+      }
       
       if (Number(formData.booking_amount) > Number(formData.total_amount)) {
         throw new Error('Booking Amount cannot exceed Total Amount.');
@@ -191,10 +195,10 @@ export default function AdminBusiness() {
         assigned_user_id: formData.assigned_user_id,
         tl_id: tl_id,
         stl_id: stl_id,
-        customer_name: formData.customer_name,
-        project_name: formData.project_name,
-        phone: formData.phone,
-        address: formData.address,
+        customer_name: formData.customer_name.trim(),
+        project_name: formData.project_name.trim(),
+        phone: formData.phone.trim(),
+        address: formData.address?.trim() || '',
         area_sqft: Number(formData.area_sqft),
         deal_amount: Number(formData.total_amount),
         booking_amount: Number(formData.booking_amount),

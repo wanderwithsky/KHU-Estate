@@ -2,15 +2,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { formatUser } from '../../utils/formatUser';
-import { Users, FileText, Briefcase, MapPin, Award, Target } from 'lucide-react';
-import MyBusiness from '../shared/MyBusiness';
+import { Users, FileText, Award, Target, Sparkles } from 'lucide-react';
+import { fetchTlTargetProgress, type TlTargetProgress } from '../../utils/targetCalculation';
 
 export default function TeamLeaderDashboard() {
   const { profile } = useCurrentUser();
   const [stats, setStats] = useState({
     associates: 0,
-    totalBusiness: 0,
-    totalVisits: 0,
     pendingApps: 0,
     rewards: 0,
     targetProgress: 0
@@ -18,6 +16,7 @@ export default function TeamLeaderDashboard() {
 
   const [applications, setApplications] = useState<any[]>([]);
   const [myAssociates, setMyAssociates] = useState<any[]>([]);
+  const [targetData, setTargetData] = useState<TlTargetProgress | null>(null);
   const [loading, setLoading] = useState(true);
   
   // Modals state
@@ -63,13 +62,15 @@ export default function TeamLeaderDashboard() {
         setApplications(appsData);
       }
 
+      // Fetch Real Target Progress
+      const targetProgressData = await fetchTlTargetProgress(profile.id);
+      setTargetData(targetProgressData);
+
       setStats({
         associates: associatesData?.length || 0,
-        totalBusiness: 0,
-        totalVisits: 0,
         pendingApps: appsData?.length || 0,
         rewards: 0,
-        targetProgress: 25 // Mock percentage
+        targetProgress: Number((targetProgressData?.percentage || 0).toFixed(1))
       });
     } catch (e) {
       console.error(e);
@@ -219,11 +220,32 @@ export default function TeamLeaderDashboard() {
         <p className="text-sm text-brand-charcoal/70">Manage your associates and track your team's business progress.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      {targetData?.isPromoted && (
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 rounded-xl text-white shadow-lg flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-white/20 rounded-full">
+              <Sparkles size={28} className="text-amber-200" />
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wider text-emerald-200 font-semibold">Promotion Confirmed</div>
+              <h3 className="text-xl font-serif font-bold text-white">Congratulations! You've Been Promoted!</h3>
+              <p className="text-sm text-white/80 mt-1">
+                You have reached your ₹50 Lakh target and Management has promoted you to <strong>Senior Team Leader (STL)</strong>.
+              </p>
+            </div>
+          </div>
+          <a
+            href="/team-leader/targets"
+            className="px-4 py-2 bg-white text-emerald-800 rounded-lg text-sm font-semibold hover:bg-emerald-50 transition-colors shrink-0 shadow-sm"
+          >
+            View Details
+          </a>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard title="My Associates" value={stats.associates} icon={Users} colorClass="text-brand-architectural-blue" />
         <KpiCard title="Pending Apps" value={stats.pendingApps} icon={FileText} colorClass="text-yellow-600" />
-        <KpiCard title="Total Business" value={`₹${stats.totalBusiness}`} icon={Briefcase} colorClass="text-indigo-600" />
-        <KpiCard title="Plot Visits" value={stats.totalVisits} icon={MapPin} colorClass="text-purple-600" />
         <KpiCard title="Rewards" value={`₹${stats.rewards}`} icon={Award} colorClass="text-amber-600" />
         <KpiCard title="Target Progress" value={`${stats.targetProgress}%`} icon={Target} colorClass="text-green-600" />
       </div>
@@ -352,29 +374,6 @@ export default function TeamLeaderDashboard() {
             </table>
           </div>
         </div>
-        
-        {/* Business Overview Shell */}
-        <div className="bg-white rounded-lg shadow-sm border border-brand-soft-grey overflow-hidden p-8 flex flex-col items-center justify-center text-center">
-          <Briefcase className="text-brand-architectural-blue/30 mb-4" size={48} />
-          <h2 className="text-xl font-serif text-brand-deep-navy mb-2">Business Overview</h2>
-          <p className="text-brand-charcoal/70 max-w-sm text-sm">
-            Total business, active clients, and deals will be displayed here once business transactions are registered in the system.
-          </p>
-        </div>
-
-        {/* Plot Visits Shell */}
-        <div className="bg-white rounded-lg shadow-sm border border-brand-soft-grey overflow-hidden p-8 flex flex-col items-center justify-center text-center">
-          <MapPin className="text-brand-architectural-blue/30 mb-4" size={48} />
-          <h2 className="text-xl font-serif text-brand-deep-navy mb-2">Plot Visits</h2>
-          <p className="text-brand-charcoal/70 max-w-sm text-sm">
-            Site visit tracking and scheduled tours for your team will appear here once the Visits module is fully launched.
-          </p>
-        </div>
-
-      </div>
-
-      <div className="mt-12">
-        <MyBusiness />
       </div>
 
       {/* APPROVE MODAL */}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatUser } from '../../utils/formatUser';
+import { mapBusinessRecord, type MappedBusinessRecord } from '../../utils/businessMapping';
 import { Download, Filter, RefreshCw, TrendingUp, Users, Briefcase } from 'lucide-react';
 
 export default function AdminTLPerformance() {
@@ -10,8 +11,8 @@ export default function AdminTLPerformance() {
   const [selectedTl, setSelectedTl] = useState<string>('');
   
   // Data
-  const [selfBusiness, setSelfBusiness] = useState<any[]>([]);
-  const [teamBusiness, setTeamBusiness] = useState<any[]>([]);
+  const [selfBusiness, setSelfBusiness] = useState<MappedBusinessRecord[]>([]);
+  const [teamBusiness, setTeamBusiness] = useState<MappedBusinessRecord[]>([]);
   const [teamProfiles, setTeamProfiles] = useState<any[]>([]);
   
   // Filters
@@ -40,7 +41,7 @@ export default function AdminTLPerformance() {
   useEffect(() => {
     // Real-time subscription for businesses table
     const channel = supabase
-      .channel('businesses_changes_tl')
+      .channel('businesses_changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'businesses' },
@@ -60,7 +61,7 @@ export default function AdminTLPerformance() {
   const fetchTls = async () => {
     const { data } = await supabase
       .from('user_profiles')
-      .select('id, user_code, full_name')
+      .select('id, user_code, full_name, role')
       .eq('role', 'TEAM_LEADER')
       .eq('status', 'ACTIVE')
       .order('full_name');
@@ -71,31 +72,51 @@ export default function AdminTLPerformance() {
   const fetchPerformanceData = async () => {
     setLoading(true);
     try {
-      // Fetch TL's self business
+      const currentTl = tls.find(t => t.id === selectedTl);
+
+      // 1. Fetch TL's self business from businesses table
       const { data: selfData } = await supabase
         .from('businesses')
         .select(`
           *,
           client:client_id(name, phone, client_number),
           project:project_id(name),
+          assigned_user:assigned_user_id(id, user_code, full_name, role),
           user_profiles:associate_id(id, user_code, full_name, role)
         `)
-        .eq('associate_id', selectedTl)
+        .or(`associate_id.eq.${selectedTl},assigned_user_id.eq.${selectedTl}`)
         .order('created_at', { ascending: false });
         
-      const mappedSelf = (selfData || []).map((r: any) => ({
-        ...r,
-        customer_name: r.client?.name || 'N/A',
-        phone: r.client?.phone || 'N/A',
-        project_name: r.project?.name || 'N/A',
-        assigned_user_id: r.associate_id
-      }));
-      setSelfBusiness(mappedSelf);
+      // 2. Also fetch from dedicated stl_self_performance table if records exist
+      const { data: tlSelfData } = await supabase
+        .from('stl_self_performance')
+        .select('*')
+        .eq('stl_id', selectedTl)
+        .order('created_at', { ascending: false });
+
+      const mappedSelfBiz = (selfData || []).map((r: any) => mapBusinessRecord(r, currentTl));
+      const existingBizIds = new Set(mappedSelfBiz.map(b => b.id));
+
+      const mappedTlSelf = (tlSelfData || [])
+        .filter((r: any) => !existingBizIds.has(r.id))
+        .map((r: any) => mapBusinessRecord({
+          ...r,
+          created_at: r.created_at || r.business_date,
+          deal_amount: r.total_amount,
+          notes: r.remarks,
+          assigned_user_id: r.stl_id,
+          source: 'stl_self_performance'
+        }, currentTl));
+
+      const combinedSelf = [...mappedSelfBiz, ...mappedTlSelf].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setSelfBusiness(combinedSelf);
 
       // Fetch Team Profiles (downline associates)
       const { data: profiles } = await supabase
         .from('user_profiles')
-        .select('id, user_code, full_name, role')
+        .select('id, user_code, full_name, role, parent_user_id')
         .eq('parent_user_id', selectedTl)
         .eq('role', 'ASSOCIATE')
         .neq('id', selectedTl);
@@ -103,6 +124,7 @@ export default function AdminTLPerformance() {
       if (profiles && profiles.length > 0) {
         setTeamProfiles(profiles);
         const profileIds = profiles.map(p => p.id);
+        const profileMap = new Map(profiles.map(p => [p.id, p]));
         
         // Fetch Team Business
         const { data: teamData } = await supabase
@@ -111,18 +133,17 @@ export default function AdminTLPerformance() {
             *,
             client:client_id(name, phone, client_number),
             project:project_id(name),
+            assigned_user:assigned_user_id(id, user_code, full_name, role),
             user_profiles:associate_id(id, user_code, full_name, role)
           `)
-          .in('associate_id', profileIds)
+          .or(`associate_id.in.(${profileIds.join(',')}),assigned_user_id.in.(${profileIds.join(',')})`)
           .order('created_at', { ascending: false });
           
-        const mappedTeam = (teamData || []).map((r: any) => ({
-          ...r,
-          customer_name: r.client?.name || 'N/A',
-          phone: r.client?.phone || 'N/A',
-          project_name: r.project?.name || 'N/A',
-          assigned_user_id: r.associate_id
-        }));
+        const mappedTeam = (teamData || []).map((r: any) => {
+          const assignedId = r.assigned_user_id || r.associate_id;
+          const fallbackUser = profileMap.get(assignedId);
+          return mapBusinessRecord(r, fallbackUser);
+        });
         setTeamBusiness(mappedTeam);
       } else {
         setTeamProfiles([]);

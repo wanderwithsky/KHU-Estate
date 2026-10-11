@@ -74,6 +74,15 @@ export default function SeniorTLSelfPerformance() {
     setError('');
     
     try {
+      if (!formData.customer_name?.trim()) {
+        throw new Error('Customer Name is required.');
+      }
+      if (!formData.phone?.trim()) {
+        throw new Error('Phone number is required.');
+      }
+      if (!formData.project_name?.trim()) {
+        throw new Error('Project Name is required.');
+      }
       if (Number(formData.booking_amount) > Number(formData.total_amount)) {
         throw new Error('Booking Amount cannot exceed Total Amount.');
       }
@@ -81,10 +90,10 @@ export default function SeniorTLSelfPerformance() {
       const payload = {
         stl_id: profile.id,
         business_date: formData.business_date,
-        customer_name: formData.customer_name,
-        phone: formData.phone,
-        project_name: formData.project_name,
-        location: formData.location,
+        customer_name: formData.customer_name.trim(),
+        phone: formData.phone.trim(),
+        project_name: formData.project_name.trim(),
+        location: formData.location?.trim() || '',
         area_sqft: Number(formData.area_sqft) || 0,
         total_amount: Number(formData.total_amount),
         booking_amount: Number(formData.booking_amount),

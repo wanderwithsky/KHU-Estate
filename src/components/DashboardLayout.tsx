@@ -7,7 +7,7 @@ import NotificationBell from './NotificationBell';
 import { 
   Menu, LogOut, User, LayoutDashboard, 
   Users, Briefcase, FileText, BarChart3, Settings, Bell,
-  Target, CreditCard, Building, MapPin, Activity
+  Target, CreditCard, MapPin, Activity
 } from 'lucide-react';
 
 type NavItem = {
@@ -85,23 +85,13 @@ const TEAM_LEADER_MENU: NavSection[] = [
   { label: 'Associates', items: [
       { name: 'Associate Applications', path: '/team-leader/applications', icon: FileText },
   ]},
-  { label: 'Business', items: [
-      { name: 'Leads', path: '/team-leader/leads', icon: Users },
-      { name: 'Clients', path: '/team-leader/clients', icon: Users },
-      { name: 'Total Business', path: '/team-leader/business', icon: Briefcase },
-      { name: 'Deals / Bookings', path: '/team-leader/deals', icon: Building },
-  ]},
-  { label: 'Visits', items: [
-      { name: 'Plot Visits', path: '/team-leader/plot-visits', icon: MapPin },
-      { name: 'Total Visits', path: '/team-leader/visits', icon: MapPin },
-  ]},
   { label: 'Performance', items: [
+      { name: 'Self Performance', path: '/team-leader/self-performance', icon: Activity },
+      { name: 'Team Performance', path: '/team-leader/performance', icon: BarChart3 },
       { name: 'Targets', path: '/team-leader/targets', icon: Target },
   ]},
   { label: 'Reports', items: [
       { name: 'Income Report', path: '/team-leader/reports-income', icon: FileText },
-      { name: 'Business Report', path: '/team-leader/reports-business', icon: FileText },
-      { name: 'Visit Report', path: '/team-leader/reports-visits', icon: FileText },
   ]},
   { label: 'Profile', items: [
       { name: 'My Profile', path: '/team-leader/profile', icon: User },
@@ -121,9 +111,8 @@ const ASSOCIATE_MENU: NavSection[] = [
       { name: 'My Profile', path: '/associate/profile', icon: User },
   ]},
   { label: 'Performance', items: [
+      { name: 'Self Performance', path: '/associate/self-performance', icon: Activity },
       { name: 'Income Report', path: '/associate/income', icon: BarChart3 },
-      { name: 'Total Business', path: '/associate/business', icon: Briefcase },
-      { name: 'Plot Visits', path: '/associate/visits', icon: MapPin },
   ]},
   { label: 'Activity', items: [
       { name: 'My Visits', path: '/associate/my-visits', icon: MapPin },

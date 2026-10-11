@@ -2,12 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { Search, Download, RefreshCw, Award, CheckCircle, Clock } from 'lucide-react';
-import { useCurrentUser } from '../../hooks/useCurrentUser';
-
 const TARGET_AMOUNT = 5000000; // ₹50 Lakh
 
 export default function AdminTargets() {
-  const { profile: adminProfile } = useCurrentUser();
   const [loading, setLoading] = useState(false);
   const [tls, setTls] = useState<any[]>([]);
   const [promotedTls, setPromotedTls] = useState<any[]>([]);
@@ -16,6 +13,12 @@ export default function AdminTargets() {
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [viewProfileModal, setViewProfileModal] = useState(false);
   const [profileBusiness, setProfileBusiness] = useState<any[]>([]);
+
+  // Promotion Confirmation Modal
+  const [showPromoteModal, setShowPromoteModal] = useState(false);
+  const [selectedTlForPromotion, setSelectedTlForPromotion] = useState<any>(null);
+  const [promoting, setPromoting] = useState(false);
+  const [promoteError, setPromoteError] = useState('');
 
   // Filters
   const [filters, setFilters] = useState({
@@ -28,12 +31,26 @@ export default function AdminTargets() {
   }, []);
 
   useEffect(() => {
-    // Listen for business changes to update targets in real-time
+    // Listen for business, self performance, and promotion changes to update targets in real-time
     const channel = supabase
       .channel('businesses_changes_targets')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'businesses' },
+        () => {
+          fetchData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'stl_self_performance' },
+        () => {
+          fetchData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'promotions' },
         () => {
           fetchData();
         }
@@ -72,9 +89,7 @@ export default function AdminTargets() {
         console.warn('Promotions table might not exist yet.');
       }
 
-      // 4. Fetch all businesses for calculation
-      // For TLs, eligible business is Self + their Associates
-      // We also need all associates under these TLs and STLs
+      // 4. Fetch all businesses and self performance for calculation
       const { data: allAssociates } = await supabase
         .from('user_profiles')
         .select('id, parent_user_id')
@@ -82,21 +97,52 @@ export default function AdminTargets() {
         
       const { data: allBusiness } = await supabase
         .from('businesses')
-        .select('id, assigned_user_id, deal_amount, total_amount, booking_amount, total_income, balance_amount, created_at, customer_name, phone, project_name, area_sqft, commission_percent, notes, remarks');
+        .select('id, assigned_user_id, associate_id, tl_id, deal_amount, total_amount, booking_amount, total_income, balance_amount, created_at, customer_name, phone, project_name, area_sqft, commission_percent, notes, remarks');
+
+      const { data: allSelfPerf } = await supabase
+        .from('stl_self_performance')
+        .select('*');
 
       const calcBusiness = (userId: string) => {
         const myAssoc = allAssociates?.filter(a => a.parent_user_id === userId).map(a => a.id) || [];
-        const eligibleIds = [userId, ...myAssoc];
-        const myBiz = allBusiness?.filter(b => eligibleIds.includes(b.assigned_user_id)) || [];
         
-        return myBiz.reduce((acc, curr) => ({
-          records: acc.records + 1,
-          totalAmount: acc.totalAmount + (curr.deal_amount || curr.total_amount || 0),
-          bookingAmount: acc.bookingAmount + (curr.booking_amount || 0),
-          income: acc.income + (curr.total_income || 0),
-          balance: acc.balance + (curr.balance_amount || 0),
-          recordsList: myBiz
-        }), { records: 0, totalAmount: 0, bookingAmount: 0, income: 0, balance: 0, recordsList: myBiz });
+        // 1. Self records from stl_self_performance
+        const mySelfPerf = (allSelfPerf || []).filter(s => s.stl_id === userId);
+        const mySelfPerfIds = new Set(mySelfPerf.map(s => s.id));
+
+        // 2. Self and Team records from businesses table
+        const selfBiz = (allBusiness || []).filter(b => 
+          !mySelfPerfIds.has(b.id) && (b.assigned_user_id === userId || b.associate_id === userId)
+        );
+        const selfBizIds = new Set(selfBiz.map(b => b.id));
+
+        const teamBiz = (allBusiness || []).filter(b => {
+          if (selfBizIds.has(b.id) || mySelfPerfIds.has(b.id)) return false;
+          return myAssoc.includes(b.assigned_user_id) || myAssoc.includes(b.associate_id) || b.tl_id === userId;
+        });
+
+        const selfAmount = mySelfPerf.reduce((sum, r) => sum + Number(r.total_amount || 0), 0) +
+          selfBiz.reduce((sum, r) => sum + Number(r.deal_amount || r.total_amount || 0), 0);
+        
+        const teamAmount = teamBiz.reduce((sum, r) => sum + Number(r.deal_amount || r.total_amount || 0), 0);
+        const totalAmount = selfAmount + teamAmount;
+
+        const allRecords = [
+          ...mySelfPerf.map(r => ({ ...r, source: 'Self Business', deal_amount: r.total_amount })),
+          ...selfBiz.map(r => ({ ...r, source: 'Self Business' })),
+          ...teamBiz.map(r => ({ ...r, source: 'Team Business' }))
+        ];
+
+        return {
+          selfAmount,
+          teamAmount,
+          totalAmount,
+          records: allRecords.length,
+          bookingAmount: allRecords.reduce((sum, r) => sum + Number(r.booking_amount || 0), 0),
+          income: allRecords.reduce((sum, r) => sum + Number(r.total_income || 0), 0),
+          balance: allRecords.reduce((sum, r) => sum + Number(r.balance_amount || 0), 0),
+          recordsList: allRecords
+        };
       };
 
       // Map TLs
@@ -132,7 +178,10 @@ export default function AdminTargets() {
           remaining: 0,
           targetStatus: 'PROMOTED',
           isPromoted: true,
-          promotionDate: promRecord.promotion_date
+          achievedAtPromotion: promRecord.achieved_amount,
+          previousRole: promRecord.previous_role || 'TEAM_LEADER',
+          newRole: promRecord.new_role || 'SENIOR_TL',
+          promotionDate: promRecord.promotion_date || promRecord.created_at
         };
       }).filter(Boolean);
 
@@ -146,58 +195,38 @@ export default function AdminTargets() {
     }
   };
 
-  const handlePromote = async (tl: any) => {
-    if (!window.confirm(`Are you sure you want to promote ${tl.full_name} to Senior Team Leader?`)) return;
-    
+  const handlePromote = (tl: any) => {
+    setSelectedTlForPromotion(tl);
+    setPromoteError('');
+    setShowPromoteModal(true);
+  };
+
+  const handleConfirmPromote = async () => {
+    if (!selectedTlForPromotion) return;
+    setPromoting(true);
+    setPromoteError('');
+
     try {
-      setLoading(true);
-      
-      // Update role in user_profiles
-      const { error: updateError } = await supabase
-        .from('user_profiles')
-        .update({ role: 'SENIOR_TL' })
-        .eq('id', tl.id);
-        
-      if (updateError) throw updateError;
-      
-      // Create promotion record
-      try {
-        await supabase.from('promotions').insert({
-          user_id: tl.id,
-          previous_role: 'TEAM_LEADER',
-          new_role: 'SENIOR_TL',
-          target_amount: TARGET_AMOUNT,
-          achieved_amount: tl.totalAmount,
-          status: 'PROMOTED',
-          created_by: adminProfile?.id
-        });
-      } catch (e) {
-        console.warn('Failed to insert into promotions table', e);
-      }
-      
-      // Add audit log
-      await supabase.from('audit_logs').insert({
-        action: 'ADMIN_PROMOTED_TEAM_LEADER',
-        module: 'USERS',
-        actor_user_id: adminProfile?.id,
-        entity_id: tl.id,
-        entity_type: 'USER',
-        new_data: { 
-          previous_role: 'TEAM_LEADER',
-          new_role: 'SENIOR_TL',
-          target_amount: TARGET_AMOUNT,
-          achieved_amount: tl.totalAmount
-        }
+      // Execute transactional server-side RPC to promote TL and create snapshot
+      const { data, error } = await supabase.rpc('promote_team_leader', {
+        p_user_id: selectedTlForPromotion.id,
+        p_achieved_amount: Number(selectedTlForPromotion.totalAmount || 0)
       });
-      
-      alert(`${tl.full_name} has been successfully promoted to Senior Team Leader!`);
-      fetchData();
-      
-    } catch (error: any) {
-      console.error('Promotion error:', error);
-      alert('Failed to promote user: ' + error.message);
+
+      if (error) throw error;
+      if (data && data.success === false) {
+        throw new Error(data.message || 'Promotion could not be completed.');
+      }
+
+      setShowPromoteModal(false);
+      setSelectedTlForPromotion(null);
+      alert(`${selectedTlForPromotion.full_name} has been successfully promoted to Senior Team Leader!`);
+      await fetchData();
+    } catch (err: any) {
+      console.error('Promotion error:', err);
+      setPromoteError(err.message || 'Failed to promote team leader');
     } finally {
-      setLoading(false);
+      setPromoting(false);
     }
   };
 
@@ -228,7 +257,7 @@ export default function AdminTargets() {
   // CSV Export
   const exportCSV = (data: any[], filename: string) => {
     let csv = '';
-    const headers = ['Team Leader', 'User ID', 'Current Business', 'Target', 'Progress %', 'Remaining Amount', 'Status', 'Promotion Date'];
+    const headers = ['Team Leader', 'User ID', 'Self Business', 'Team Business', 'Total Achieved', 'Target', 'Progress %', 'Remaining Amount', 'Status', 'Promotion Date'];
     csv += headers.join(',') + '\n';
     
     data.forEach(row => {
@@ -237,7 +266,9 @@ export default function AdminTargets() {
       const values = [
         name, 
         row.user_code, 
-        row.totalAmount, 
+        row.selfAmount || 0,
+        row.teamAmount || 0,
+        row.totalAmount || 0,
         row.target, 
         `${row.progress.toFixed(2)}%`, 
         row.remaining, 
@@ -367,7 +398,9 @@ export default function AdminTargets() {
               <tr>
                 <th className="px-6 py-3 font-medium">Team Leader</th>
                 <th className="px-6 py-3 font-medium">User ID</th>
-                <th className="px-6 py-3 font-medium text-right">Current Business</th>
+                <th className="px-6 py-3 font-medium text-right">Self Business</th>
+                <th className="px-6 py-3 font-medium text-right">Team Business</th>
+                <th className="px-6 py-3 font-medium text-right">Total Achieved</th>
                 <th className="px-6 py-3 font-medium">Target Progress</th>
                 <th className="px-6 py-3 font-medium text-right">Remaining</th>
                 <th className="px-6 py-3 font-medium">Status</th>
@@ -378,9 +411,11 @@ export default function AdminTargets() {
               {filteredTls.map(tl => (
                 <tr key={tl.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 font-medium text-brand-deep-navy">{tl.full_name}</td>
-                  <td className="px-6 py-4">{tl.user_code}</td>
+                  <td className="px-6 py-4 font-mono text-xs">{tl.user_code}</td>
+                  <td className="px-6 py-4 text-right text-gray-700">{formatCurrency(tl.selfAmount || 0)}</td>
+                  <td className="px-6 py-4 text-right text-gray-700">{formatCurrency(tl.teamAmount || 0)}</td>
                   <td className="px-6 py-4 text-right font-medium text-brand-architectural-blue">{formatCurrency(tl.totalAmount)}</td>
-                  <td className="px-6 py-4 min-w-[200px]">
+                  <td className="px-6 py-4 min-w-[180px]">
                     <div className="flex justify-between text-xs mb-1">
                       <span className="font-medium">{formatCurrency(tl.totalAmount)}</span>
                       <span className="text-gray-500">{tl.progress.toFixed(1)}%</span>
@@ -410,7 +445,10 @@ export default function AdminTargets() {
                         View
                       </button>
                       {tl.targetStatus === 'TARGET ACHIEVED' && (
-                        <button onClick={() => handlePromote(tl)} className="bg-amber-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-amber-600 shadow-sm transition-colors">
+                        <button 
+                          onClick={() => handlePromote(tl)} 
+                          className="bg-amber-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-amber-600 shadow-sm transition-colors"
+                        >
                           Promote
                         </button>
                       )}
@@ -419,7 +457,7 @@ export default function AdminTargets() {
                 </tr>
               ))}
               {filteredTls.length === 0 && (
-                <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-500">No active Team Leaders found.</td></tr>
+                <tr><td colSpan={9} className="px-6 py-8 text-center text-gray-500">No active Team Leaders found.</td></tr>
               )}
             </tbody>
           </table>
@@ -442,9 +480,10 @@ export default function AdminTargets() {
               <tr>
                 <th className="px-6 py-3 font-medium">Name</th>
                 <th className="px-6 py-3 font-medium">User ID</th>
-                <th className="px-6 py-3 font-medium text-right">Business Achieved</th>
+                <th className="px-6 py-3 font-medium">Previous Role</th>
+                <th className="px-6 py-3 font-medium">New Role</th>
+                <th className="px-6 py-3 font-medium text-right">Achieved Business</th>
                 <th className="px-6 py-3 font-medium">Promotion Date</th>
-                <th className="px-6 py-3 font-medium">Current Role</th>
                 <th className="px-6 py-3 font-medium">Status</th>
                 <th className="px-6 py-3 font-medium text-center">Action</th>
               </tr>
@@ -453,12 +492,15 @@ export default function AdminTargets() {
               {filteredPromoted.map(tl => (
                 <tr key={tl.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 font-medium text-brand-deep-navy">{tl.full_name}</td>
-                  <td className="px-6 py-4">{tl.user_code}</td>
-                  <td className="px-6 py-4 text-right font-medium text-green-600">{formatCurrency(tl.totalAmount)}</td>
-                  <td className="px-6 py-4">{new Date(tl.promotionDate).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 font-mono text-xs">{tl.user_code}</td>
                   <td className="px-6 py-4">
-                    <span className="text-[10px] bg-gray-100 px-2 py-1 rounded-full font-medium">{tl.role}</span>
+                    <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-medium">{tl.previousRole || 'TEAM_LEADER'}</span>
                   </td>
+                  <td className="px-6 py-4">
+                    <span className="text-xs bg-blue-50 text-blue-800 px-2 py-0.5 rounded font-medium border border-blue-100">{tl.newRole || 'SENIOR_TL'}</span>
+                  </td>
+                  <td className="px-6 py-4 text-right font-medium text-green-600">{formatCurrency(tl.achievedAtPromotion || tl.totalAmount)}</td>
+                  <td className="px-6 py-4">{new Date(tl.promotionDate).toLocaleDateString()}</td>
                   <td className="px-6 py-4">
                     <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-green-200">
                       <CheckCircle size={12} /> PROMOTED
@@ -472,12 +514,90 @@ export default function AdminTargets() {
                 </tr>
               ))}
               {filteredPromoted.length === 0 && (
-                <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-500">No promoted team leaders yet.</td></tr>
+                <tr><td colSpan={8} className="px-6 py-8 text-center text-gray-500">No promoted team leaders yet.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Promotion Confirmation Modal */}
+      {showPromoteModal && selectedTlForPromotion && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 border border-gray-100">
+            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
+              <div className="p-3 bg-amber-100 text-amber-700 rounded-full">
+                <Award size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-serif font-bold text-brand-deep-navy">Confirm Team Leader Promotion</h3>
+                <p className="text-xs text-gray-500">Target threshold (₹50,00,000) achieved</p>
+              </div>
+            </div>
+
+            {promoteError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200">
+                {promoteError}
+              </div>
+            )}
+
+            <div className="bg-brand-off-white p-4 rounded-lg space-y-2 mb-6 text-sm border border-brand-soft-grey">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Team Leader:</span>
+                <span className="font-semibold text-brand-deep-navy">{selectedTlForPromotion.full_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">User ID:</span>
+                <span className="font-mono">{selectedTlForPromotion.user_code}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Current Role:</span>
+                <span className="font-medium text-gray-700">Team Leader</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">New Role:</span>
+                <span className="font-bold text-emerald-700">Senior Team Leader (STL)</span>
+              </div>
+              <div className="border-t border-gray-200 pt-2 flex justify-between">
+                <span className="text-gray-500">Self Business:</span>
+                <span className="font-medium">{formatCurrency(selectedTlForPromotion.selfAmount || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Team Business:</span>
+                <span className="font-medium">{formatCurrency(selectedTlForPromotion.teamAmount || 0)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-brand-architectural-blue pt-1">
+                <span>Total Achieved:</span>
+                <span>{formatCurrency(selectedTlForPromotion.totalAmount || 0)}</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-600 mb-6 leading-relaxed">
+              Promoting this Team Leader will upgrade their account role to <strong>Senior Team Leader</strong>, record an immutable promotion history entry, and send an official congratulations notification to their dashboard.
+            </p>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => { setShowPromoteModal(false); setSelectedTlForPromotion(null); }}
+                className="px-4 py-2 border rounded text-sm text-gray-700 hover:bg-gray-50"
+                disabled={promoting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmPromote}
+                disabled={promoting}
+                className="px-5 py-2 bg-amber-500 text-white rounded text-sm font-semibold hover:bg-amber-600 shadow-sm transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {promoting ? <RefreshCw size={14} className="animate-spin" /> : <Award size={14} />}
+                <span>{promoting ? 'Promoting...' : 'Confirm Promotion'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Profile Modal */}
       {viewProfileModal && selectedProfile && (

@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatUser } from '../../utils/formatUser';
-import { Download, Filter, RefreshCw, TrendingUp, Users, Briefcase } from 'lucide-react';
+import { mapBusinessRecord, type MappedBusinessRecord } from '../../utils/businessMapping';
+import { Download, Filter, RefreshCw, TrendingUp, Users, Briefcase, AlertCircle } from 'lucide-react';
 
 export default function AdminSTLPerformance() {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [stls, setStls] = useState<any[]>([]);
   const [selectedStl, setSelectedStl] = useState<string>('');
   
   // Data
-  const [selfBusiness, setSelfBusiness] = useState<any[]>([]);
-  const [teamBusiness, setTeamBusiness] = useState<any[]>([]);
+  const [selfBusiness, setSelfBusiness] = useState<MappedBusinessRecord[]>([]);
+  const [teamBusiness, setTeamBusiness] = useState<MappedBusinessRecord[]>([]);
   const [teamProfiles, setTeamProfiles] = useState<any[]>([]);
   
   // Filters
@@ -35,6 +37,7 @@ export default function AdminSTLPerformance() {
       setSelfBusiness([]);
       setTeamBusiness([]);
       setTeamProfiles([]);
+      setError(null);
     }
   }, [selectedStl]);
 
@@ -61,7 +64,7 @@ export default function AdminSTLPerformance() {
   const fetchStls = async () => {
     const { data } = await supabase
       .from('user_profiles')
-      .select('id, user_code, full_name')
+      .select('id, user_code, full_name, role')
       .eq('role', 'SENIOR_TL')
       .eq('status', 'ACTIVE')
       .order('full_name');
@@ -70,66 +73,130 @@ export default function AdminSTLPerformance() {
   };
 
   const fetchPerformanceData = async () => {
+    if (!selectedStl) return;
     setLoading(true);
+    setError(null);
     try {
-      // Fetch STL's self business
-      const { data: selfData } = await supabase
+      const currentStl = stls.find(s => s.id === selectedStl);
+
+      // 1. Fetch STL's self business from authoritative businesses table
+      const { data: selfData, error: selfBizError } = await supabase
         .from('businesses')
         .select(`
           *,
           client:client_id(name, phone, client_number),
           project:project_id(name),
+          assigned_user:assigned_user_id(id, user_code, full_name, role),
           user_profiles:associate_id(id, user_code, full_name, role)
         `)
-        .eq('associate_id', selectedStl)
+        .or(`associate_id.eq.${selectedStl},assigned_user_id.eq.${selectedStl}`)
         .order('created_at', { ascending: false });
-        
-      const mappedSelf = (selfData || []).map((r: any) => ({
-        ...r,
-        customer_name: r.client?.name || 'N/A',
-        phone: r.client?.phone || 'N/A',
-        project_name: r.project?.name || 'N/A',
-        assigned_user_id: r.associate_id
-      }));
-      setSelfBusiness(mappedSelf);
 
-      // Fetch Team Profiles (downline)
-      const { data: profiles } = await supabase
+      if (selfBizError) {
+        throw new Error(`Failed to load businesses: ${selfBizError.message}`);
+      }
+
+      // 2. Also fetch from dedicated stl_self_performance table if records exist
+      const { data: stlSelfData, error: stlSelfError } = await supabase
+        .from('stl_self_performance')
+        .select('*')
+        .eq('stl_id', selectedStl)
+        .order('created_at', { ascending: false });
+
+      if (stlSelfError && stlSelfError.code !== 'PGRST116') {
+        console.warn('Note on stl_self_performance:', stlSelfError.message);
+      }
+
+      // Map businesses records
+      const mappedSelfBiz = (selfData || []).map((r: any) => mapBusinessRecord(r, currentStl));
+      const existingBizIds = new Set(mappedSelfBiz.map(b => b.id));
+
+      // Map stl_self_performance records without duplicating
+      const mappedStlSelf = (stlSelfData || [])
+        .filter((r: any) => !existingBizIds.has(r.id))
+        .map((r: any) => mapBusinessRecord({
+          ...r,
+          created_at: r.created_at || r.business_date,
+          deal_amount: r.total_amount,
+          notes: r.remarks,
+          assigned_user_id: r.stl_id,
+          source: 'stl_self_performance'
+        }, currentStl));
+
+      const combinedSelf = [...mappedSelfBiz, ...mappedStlSelf].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setSelfBusiness(combinedSelf);
+
+      // 3. Fetch Team Profiles in STL downline hierarchy:
+      // First get TLs reporting to this STL
+      const { data: tls, error: tlError } = await supabase
         .from('user_profiles')
-        .select('id, user_code, full_name, role, parent_user_id')
-        .eq('senior_tl_id', selectedStl)
-        .neq('id', selectedStl);
-        
-      if (profiles && profiles.length > 0) {
-        setTeamProfiles(profiles);
-        const profileIds = profiles.map(p => p.id);
-        
+        .select('id, user_code, full_name, role, parent_user_id, senior_tl_id')
+        .or(`parent_user_id.eq.${selectedStl},senior_tl_id.eq.${selectedStl}`)
+        .eq('role', 'TEAM_LEADER');
+
+      if (tlError) {
+        throw new Error(`Failed to load team leaders: ${tlError.message}`);
+      }
+
+      const tlList = tls || [];
+      const tlIds = tlList.map(tl => tl.id);
+
+      // Second get Associates reporting to those TLs OR directly to this STL
+      let assocQuery = supabase
+        .from('user_profiles')
+        .select('id, user_code, full_name, role, parent_user_id, senior_tl_id')
+        .eq('role', 'ASSOCIATE');
+
+      if (tlIds.length > 0) {
+        assocQuery = assocQuery.or(`parent_user_id.in.(${tlIds.join(',')}),parent_user_id.eq.${selectedStl},senior_tl_id.eq.${selectedStl}`);
+      } else {
+        assocQuery = assocQuery.or(`parent_user_id.eq.${selectedStl},senior_tl_id.eq.${selectedStl}`);
+      }
+
+      const { data: associates, error: assocError } = await assocQuery;
+      if (assocError) {
+        throw new Error(`Failed to load associates: ${assocError.message}`);
+      }
+
+      const downlineProfiles = [...tlList, ...(associates || [])].filter(p => p.id !== selectedStl);
+      setTeamProfiles(downlineProfiles);
+
+      if (downlineProfiles.length > 0) {
+        const profileIds = downlineProfiles.map(p => p.id);
+        const profileMap = new Map(downlineProfiles.map(p => [p.id, p]));
+
         // Fetch Team Business
-        const { data: teamData } = await supabase
+        const { data: teamData, error: teamBizError } = await supabase
           .from('businesses')
           .select(`
             *,
             client:client_id(name, phone, client_number),
             project:project_id(name),
+            assigned_user:assigned_user_id(id, user_code, full_name, role),
             user_profiles:associate_id(id, user_code, full_name, role)
           `)
-          .in('associate_id', profileIds)
+          .or(`associate_id.in.(${profileIds.join(',')}),assigned_user_id.in.(${profileIds.join(',')})`)
           .order('created_at', { ascending: false });
-          
-        const mappedTeam = (teamData || []).map((r: any) => ({
-          ...r,
-          customer_name: r.client?.name || 'N/A',
-          phone: r.client?.phone || 'N/A',
-          project_name: r.project?.name || 'N/A',
-          assigned_user_id: r.associate_id
-        }));
+
+        if (teamBizError) {
+          throw new Error(`Failed to load team business: ${teamBizError.message}`);
+        }
+
+        const mappedTeam = (teamData || []).map((r: any) => {
+          const assignedId = r.assigned_user_id || r.associate_id;
+          const fallbackUser = profileMap.get(assignedId);
+          return mapBusinessRecord(r, fallbackUser);
+        });
+
         setTeamBusiness(mappedTeam);
       } else {
-        setTeamProfiles([]);
         setTeamBusiness([]);
       }
-    } catch (error) {
-      console.error('Error fetching performance:', error);
+    } catch (err: any) {
+      console.error('Error fetching performance:', err);
+      setError(err.message || 'Error fetching performance data');
     } finally {
       setLoading(false);
     }
@@ -311,6 +378,21 @@ export default function AdminSTLPerformance() {
         </div>
       </div>
 
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between text-red-700 text-sm">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={18} />
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={fetchPerformanceData}
+            className="text-xs font-medium underline hover:text-red-900"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {selectedStl && (
         <>
           {/* Filters */}
@@ -427,6 +509,7 @@ export default function AdminSTLPerformance() {
                     <th className="px-6 py-3 font-medium">User</th>
                     <th className="px-6 py-3 font-medium">Role</th>
                     <th className="px-6 py-3 font-medium">Customer Name</th>
+                    <th className="px-6 py-3 font-medium">Phone</th>
                     <th className="px-6 py-3 font-medium">Project</th>
                     <th className="px-6 py-3 font-medium text-right">Total Amount</th>
                     <th className="px-6 py-3 font-medium text-right">Booking</th>
@@ -445,6 +528,7 @@ export default function AdminSTLPerformance() {
                         <span className="text-[10px] bg-gray-100 px-2 py-1 rounded-full font-medium">{record.user_profiles?.role}</span>
                       </td>
                       <td className="px-6 py-3">{record.customer_name}</td>
+                      <td className="px-6 py-3">{record.phone}</td>
                       <td className="px-6 py-3">{record.project_name}</td>
                       <td className="px-6 py-3 text-right">{formatCurrency(record.deal_amount || record.total_amount)}</td>
                       <td className="px-6 py-3 text-right">{formatCurrency(record.booking_amount)}</td>
@@ -453,7 +537,7 @@ export default function AdminSTLPerformance() {
                     </tr>
                   ))}
                   {filteredTeam.length === 0 && (
-                    <tr><td colSpan={9} className="px-6 py-8 text-center text-gray-500">No team business records found.</td></tr>
+                    <tr><td colSpan={10} className="px-6 py-8 text-center text-gray-500">No team business records found.</td></tr>
                   )}
                 </tbody>
               </table>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { formatCurrency } from '../../utils/formatCurrency';
+import { mapBusinessRecord, type MappedBusinessRecord } from '../../utils/businessMapping';
 import { Download, Filter, RefreshCw, MapPin, Award } from 'lucide-react';
 
 export default function AdminAssociatePerformance() {
@@ -9,7 +10,7 @@ export default function AdminAssociatePerformance() {
   const [selectedAssociate, setSelectedAssociate] = useState<string>('');
   
   // Data
-  const [selfBusiness, setSelfBusiness] = useState<any[]>([]);
+  const [selfBusiness, setSelfBusiness] = useState<MappedBusinessRecord[]>([]);
   
   // Filters
   const [filters, setFilters] = useState({
@@ -65,6 +66,8 @@ export default function AdminAssociatePerformance() {
   const fetchPerformanceData = async () => {
     setLoading(true);
     try {
+      const currentAssociate = associates.find(a => a.id === selectedAssociate);
+
       // Fetch Associate's self business
       const { data: selfData } = await supabase
         .from('businesses')
@@ -72,18 +75,13 @@ export default function AdminAssociatePerformance() {
           *,
           client:client_id(name, phone, client_number),
           project:project_id(name),
+          assigned_user:assigned_user_id(id, user_code, full_name, role),
           user_profiles:associate_id(id, user_code, full_name, role)
         `)
-        .eq('associate_id', selectedAssociate)
+        .or(`associate_id.eq.${selectedAssociate},assigned_user_id.eq.${selectedAssociate}`)
         .order('created_at', { ascending: false });
         
-      const mappedSelf = (selfData || []).map((r: any) => ({
-        ...r,
-        customer_name: r.client?.name || 'N/A',
-        phone: r.client?.phone || 'N/A',
-        project_name: r.project?.name || 'N/A',
-        assigned_user_id: r.associate_id
-      }));
+      const mappedSelf = (selfData || []).map((r: any) => mapBusinessRecord(r, currentAssociate));
       setSelfBusiness(mappedSelf);
     } catch (error) {
       console.error('Error fetching performance:', error);

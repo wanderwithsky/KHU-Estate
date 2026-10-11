@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { formatCurrency } from '../../utils/formatCurrency';
+import { mapBusinessRecord, type MappedBusinessRecord } from '../../utils/businessMapping';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { Download, Filter, RefreshCw, Users, Briefcase } from 'lucide-react';
 
@@ -9,7 +10,7 @@ export default function SeniorTLTeamPerformance() {
   const [loading, setLoading] = useState(false);
   
   // Data
-  const [teamBusiness, setTeamBusiness] = useState<any[]>([]);
+  const [teamBusiness, setTeamBusiness] = useState<MappedBusinessRecord[]>([]);
   const [teamProfiles, setTeamProfiles] = useState<any[]>([]);
   
   // Filters
@@ -82,6 +83,8 @@ export default function SeniorTLTeamPerformance() {
         setTeamProfiles(profiles);
         const profileIds = profiles.map(p => p.id);
         
+        const profileMap = new Map(profiles.map(p => [p.id, p]));
+
         // Fetch Team Business
         const { data: teamData } = await supabase
           .from('businesses')
@@ -89,18 +92,17 @@ export default function SeniorTLTeamPerformance() {
             *,
             client:client_id(name, phone, client_number),
             project:project_id(name),
+            assigned_user:assigned_user_id(id, user_code, full_name, role),
             user_profiles:associate_id(id, user_code, full_name, role)
           `)
-          .in('associate_id', profileIds)
+          .or(`associate_id.in.(${profileIds.join(',')}),assigned_user_id.in.(${profileIds.join(',')})`)
           .order('created_at', { ascending: false });
           
-        const mappedTeam = (teamData || []).map((r: any) => ({
-          ...r,
-          customer_name: r.customer_name || r.client?.name || 'N/A',
-          phone: r.phone || r.client?.phone || 'N/A',
-          project_name: r.project_name || r.project?.name || 'N/A',
-          assigned_user_id: r.assigned_user_id || r.associate_id
-        }));
+        const mappedTeam = (teamData || []).map((r: any) => {
+          const assignedId = r.assigned_user_id || r.associate_id;
+          const fallbackUser = profileMap.get(assignedId);
+          return mapBusinessRecord(r, fallbackUser);
+        });
         setTeamBusiness(mappedTeam);
       } else {
         setTeamProfiles([]);

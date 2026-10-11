@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { formatUser } from '../../utils/formatUser';
-import { Briefcase, BarChart3, MapPin, Award, User, Phone, Mail, ShieldAlert } from 'lucide-react';
+import { BarChart3, Award, User, Phone, Mail, ShieldAlert } from 'lucide-react';
 import MyBusiness from '../shared/MyBusiness';
 
 export default function AssociateDashboard() {
@@ -13,11 +13,8 @@ export default function AssociateDashboard() {
 
   const [income, setIncome] = useState(0);
 
-  // Mocking other stats since there's no backend for these yet
   const stats = {
-    totalBusiness: 0,
     income: income,
-    totalVisits: 0,
     rewards: 0
   };
 
@@ -116,10 +113,8 @@ export default function AssociateDashboard() {
         <p className="text-sm text-brand-charcoal/70">Here's your KHU Developers performance overview.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard title="Total Business" value={stats.totalBusiness} emptyState="No business generated yet." icon={Briefcase} colorClass="text-indigo-600" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <KpiCard title="Income" value={stats.income} emptyState="No income records available yet." icon={BarChart3} colorClass="text-green-600" />
-        <KpiCard title="Total Visits" value={stats.totalVisits} emptyState="No visits scheduled yet." icon={MapPin} colorClass="text-purple-600" />
         <KpiCard title="Rewards" value={stats.rewards} emptyState="No rewards available yet." icon={Award} colorClass="text-amber-600" />
       </div>
 

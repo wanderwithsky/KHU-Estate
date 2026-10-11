@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 import BusinessSpreadsheet from '../../components/BusinessSpreadsheet';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { formatCurrency } from '../../utils/formatCurrency';
+import { mapBusinessRecord } from '../../utils/businessMapping';
 
 interface MyBusinessProps {
   selfOnly?: boolean;
@@ -38,27 +39,19 @@ export default function MyBusiness({ selfOnly = false }: MyBusinessProps) {
         .order('created_at', { ascending: false });
 
       if (selfOnly) {
-        query = query.eq('associate_id', profile?.id);
+        query = query.or(`associate_id.eq.${profile?.id},assigned_user_id.eq.${profile?.id}`);
       } else if (profile?.role === 'ASSOCIATE') {
-        query = query.eq('associate_id', profile.id);
+        query = query.or(`associate_id.eq.${profile.id},assigned_user_id.eq.${profile.id}`);
       } else if (profile?.role === 'TEAM_LEADER') {
-        query = query.or(`associate_id.eq.${profile.id},tl_id.eq.${profile.id}`);
+        query = query.or(`associate_id.eq.${profile.id},assigned_user_id.eq.${profile.id},tl_id.eq.${profile.id}`);
       } else if (profile?.role === 'SENIOR_TL') {
-        query = query.or(`associate_id.eq.${profile.id},tl_id.eq.${profile.id},stl_id.eq.${profile.id}`);
+        query = query.or(`associate_id.eq.${profile.id},assigned_user_id.eq.${profile.id},tl_id.eq.${profile.id},stl_id.eq.${profile.id}`);
       }
 
       const { data, error } = await query;
       if (error) throw error;
       
-      const mappedRecords = (data || []).map((r: any) => ({
-        ...r,
-        customer_name: r.customer_name || r.client?.name || 'N/A',
-        phone: r.phone || r.client?.phone || 'N/A',
-        project_name: r.project_name || r.project?.name || 'N/A',
-        // Optional: map user_profiles for BusinessSpreadsheet
-        user_profiles: r.assigned_user || r.associate || r.tl || r.stl || undefined,
-        assigned_user_id: r.assigned_user_id || r.associate_id || r.tl_id || r.stl_id
-      }));
+      const mappedRecords = (data || []).map((r: any) => mapBusinessRecord(r));
       
       setRecords(mappedRecords);
     } catch (err: any) {
