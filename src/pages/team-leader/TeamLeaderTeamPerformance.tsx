@@ -104,23 +104,26 @@ export default function TeamLeaderTeamPerformance() {
 
       const existingIds = new Set(mappedBiz.map(b => b.id));
 
-      // Also include TL's self business from stl_self_performance if any
+      // Also include TL's and assigned downline associates' self business from stl_self_performance
       const { data: selfPerfData } = await supabase
         .from('stl_self_performance')
         .select('*')
-        .eq('stl_id', profile.id)
+        .in('stl_id', allMemberIds)
         .order('created_at', { ascending: false });
 
       const mappedSelfPerf = (selfPerfData || [])
         .filter((r: any) => !existingIds.has(r.id))
-        .map((r: any) => mapBusinessRecord({
-          ...r,
-          created_at: r.created_at || r.business_date,
-          deal_amount: r.total_amount,
-          notes: r.remarks,
-          assigned_user_id: r.stl_id,
-          source: 'stl_self_performance'
-        }, profile));
+        .map((r: any) => {
+          const member = profileMap.get(r.stl_id) || profile;
+          return mapBusinessRecord({
+            ...r,
+            created_at: r.created_at || r.business_date,
+            deal_amount: r.total_amount,
+            notes: r.remarks,
+            assigned_user_id: r.stl_id,
+            source: 'stl_self_performance'
+          }, member);
+        });
 
       const combined = [...mappedBiz, ...mappedSelfPerf].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()

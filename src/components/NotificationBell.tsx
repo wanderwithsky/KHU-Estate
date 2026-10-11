@@ -18,7 +18,7 @@ export default function NotificationBell() {
     fetchNotifications();
     
     const channel = supabase
-      .channel('public:notifications')
+      .channel(`public:notifications:bell:${profile.id}`)
       .on(
         'postgres_changes',
         { 
@@ -33,8 +33,14 @@ export default function NotificationBell() {
       )
       .subscribe();
 
+    const handleFocus = () => {
+      fetchNotifications();
+    };
+    window.addEventListener('focus', handleFocus);
+
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('focus', handleFocus);
     };
   }, [profile?.id]);
 
@@ -51,17 +57,23 @@ export default function NotificationBell() {
   const fetchNotifications = async () => {
     if (!profile?.id) return;
     
-    // Fetch latest 10 notifications for dropdown
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('recipient_user_id', profile.id)
-      .order('created_at', { ascending: false })
-      .limit(10);
+    const [{ data: notifs }, { count }] = await Promise.all([
+      supabase
+        .from('notifications')
+        .select('*')
+        .eq('recipient_user_id', profile.id)
+        .order('created_at', { ascending: false })
+        .limit(10),
+      supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('recipient_user_id', profile.id)
+        .eq('is_read', false)
+    ]);
       
-    if (data) {
-      setNotifications(data);
-      setUnreadCount(data.filter(n => !n.is_read).length);
+    if (notifs) {
+      setNotifications(notifs);
+      setUnreadCount(count ?? notifs.filter(n => !n.is_read).length);
     }
   };
 
@@ -77,8 +89,8 @@ export default function NotificationBell() {
     setUnreadCount(prev => Math.max(0, prev - 1));
   };
 
-  const markAllAsRead = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const markAllAsRead = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (!profile?.id) return;
     
     await supabase
@@ -111,15 +123,32 @@ export default function NotificationBell() {
         navigate(`${basePath}/applications`);
         break;
       case 'BUSINESS':
-        navigate(`${basePath}/business`);
+        if (profile?.role === 'ADMIN') navigate('/admin/business');
+        else if (profile?.role === 'SENIOR_TL') navigate('/senior-team-leader/performance');
+        else if (profile?.role === 'TEAM_LEADER') navigate('/team-leader/performance');
+        else if (profile?.role === 'ASSOCIATE') navigate('/associate/self-performance');
         break;
       case 'VISIT':
-        navigate(`${basePath}/plot-visits`);
+        if (profile?.role === 'ADMIN') navigate('/admin/visits');
+        else if (profile?.role === 'SENIOR_TL') navigate('/senior-team-leader/visits');
+        else if (profile?.role === 'TEAM_LEADER') navigate('/team-leader/my-visits');
+        else if (profile?.role === 'ASSOCIATE') navigate('/associate/my-visits');
+        break;
+      case 'COMMISSION':
+        if (profile?.role === 'ADMIN') navigate('/admin/commissions');
+        else if (profile?.role === 'SENIOR_TL') navigate('/senior-team-leader/reports-income');
+        else if (profile?.role === 'TEAM_LEADER') navigate('/team-leader/reports-income');
+        else if (profile?.role === 'ASSOCIATE') navigate('/associate/income');
+        break;
+      case 'PROMOTION':
+        if (profile?.role === 'ADMIN') navigate('/admin/targets');
+        else if (profile?.role === 'SENIOR_TL') navigate('/senior-team-leader/performance');
+        else navigate(`${basePath}/notifications`);
         break;
       case 'USER':
         if (profile?.role === 'ADMIN') {
           if (notification.type === 'TL_PROMOTED') navigate(`${basePath}/targets`);
-          else navigate(`${basePath}/associates`); // Generic fallback
+          else navigate(`${basePath}/team`);
         }
         break;
       default:

@@ -48,6 +48,7 @@ import SeniorTLTeamPerformance from './pages/senior-tl/SeniorTLTeamPerformance';
 // Team Leader
 import TeamLeaderDashboard from './pages/team-leader/TeamLeaderDashboard';
 import TeamLeaderTeam from './pages/team-leader/TeamLeaderTeam';
+import TeamLeaderApplications from './pages/team-leader/TeamLeaderApplications';
 import TeamLeaderSelfPerformance from './pages/team-leader/TeamLeaderSelfPerformance';
 import TeamLeaderTeamPerformance from './pages/team-leader/TeamLeaderTeamPerformance';
 import TeamLeaderTargets from './pages/team-leader/TeamLeaderTargets';
@@ -187,16 +188,16 @@ function App() {
           }>
             <Route index element={<TeamLeaderDashboard />} />
             <Route path="team" element={<TeamLeaderTeam />} />
-            <Route path="applications" element={<FeatureShell title="Associate Applications" />} />
+            <Route path="applications" element={<TeamLeaderApplications />} />
             
             <Route path="leads" element={<Navigate to="/team-leader" replace />} />
             <Route path="clients" element={<Navigate to="/team-leader" replace />} />
             <Route path="business" element={<Navigate to="/team-leader" replace />} />
             <Route path="deals" element={<Navigate to="/team-leader" replace />} />
             
-            <Route path="plot-visits" element={<Navigate to="/team-leader" replace />} />
-            <Route path="visits" element={<Navigate to="/team-leader" replace />} />
-            <Route path="my-visits" element={<Navigate to="/team-leader" replace />} />
+            <Route path="plot-visits" element={<Navigate to="/team-leader/my-visits" replace />} />
+            <Route path="visits" element={<UserVisits />} />
+            <Route path="my-visits" element={<UserVisits />} />
             
             <Route path="self-performance" element={<TeamLeaderSelfPerformance />} />
             <Route path="performance" element={<TeamLeaderTeamPerformance />} />

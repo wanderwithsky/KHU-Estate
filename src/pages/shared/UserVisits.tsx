@@ -10,6 +10,7 @@ export default function UserVisits() {
   const [scheduledRecords, setScheduledRecords] = useState<any[]>([]);
   const [completedRecords, setCompletedRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   
   // Summary Stats
   const [stats, setStats] = useState({
@@ -37,6 +38,8 @@ export default function UserVisits() {
     phone: '',
     meet_time: '',
     remarks: '',
+    location: '',
+    project_name: '',
     date: new Date().toISOString().split('T')[0],
     status: 'COMPLETED'
   });
@@ -125,28 +128,52 @@ export default function UserVisits() {
   }, []);
 
   useEffect(() => {
-    if (profile) {
+    if (profile?.id) {
       fetchData();
+
+      const channel = supabase
+        .channel(`public:site_visits:${profile.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'site_visits' },
+          () => {
+            fetchData();
+          }
+        )
+        .subscribe();
+
+      const handleFocus = () => {
+        fetchData();
+      };
+      window.addEventListener('focus', handleFocus);
+
+      return () => {
+        supabase.removeChannel(channel);
+        window.removeEventListener('focus', handleFocus);
+      };
     }
-  }, [profile]);
+  }, [profile?.id]);
 
   const fetchData = async () => {
+    if (!profile) return;
     setLoading(true);
+    setFetchError(null);
     try {
-      // Find where assigned or where user is associate/tl/stl
       const res = await supabase
         .from('site_visits')
         .select(`
           *,
           user_profiles:assigned_user_id(user_code, full_name, role)
         `)
+        .or(`assigned_user_id.eq.${profile.id},created_by.eq.${profile.id}`)
         .order('visit_date', { ascending: false })
         .order('visit_time', { ascending: false });
 
       if (res.error) throw res.error;
 
-      const scheduled = res.data.filter(r => ['SCHEDULED', 'RESCHEDULED', 'NO_SHOW'].includes(r.status));
-      const completed = res.data.filter(r => ['COMPLETED', 'CANCELLED'].includes(r.status));
+      const records = res.data || [];
+      const scheduled = records.filter(r => ['SCHEDULED', 'RESCHEDULED', 'NO_SHOW'].includes(r.status));
+      const completed = records.filter(r => ['COMPLETED', 'CANCELLED'].includes(r.status));
       
       setScheduledRecords(scheduled);
       setCompletedRecords(completed);
@@ -158,8 +185,9 @@ export default function UserVisits() {
         pending: scheduled.filter(r => r.status === 'SCHEDULED' || r.status === 'RESCHEDULED').length
       });
       
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching visits:', err);
+      setFetchError(err.message || 'Unable to load visit records. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -179,6 +207,8 @@ export default function UserVisits() {
         phone: visit.phone || '',
         meet_time: visit.visit_time || '',
         remarks: visit.remarks || '',
+        location: visit.location || '',
+        project_name: visit.project_name || '',
         date: visit.visit_date || new Date().toISOString().split('T')[0],
         status: visit.status || 'COMPLETED'
       });
@@ -191,6 +221,8 @@ export default function UserVisits() {
         phone: '',
         meet_time: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
         remarks: '',
+        location: '',
+        project_name: '',
         date: new Date().toISOString().split('T')[0],
         status: 'COMPLETED'
       });
@@ -244,15 +276,24 @@ export default function UserVisits() {
         selfiePath = await uploadSelfie(selfieFile);
       }
 
-      const payload = {
-        customer_name: formData.customer_name,
-        phone: formData.phone,
+      const payload: any = {
+        customer_name: formData.customer_name.trim(),
+        phone: formData.phone.trim(),
         visit_time: formData.meet_time,
-        remarks: formData.remarks,
+        remarks: formData.remarks?.trim() || null,
+        location: formData.location?.trim() || null,
+        project_name: formData.project_name?.trim() || null,
         selfie_url: selfiePath,
         status: formData.status || 'COMPLETED',
         assigned_user_id: profile?.id
       };
+
+      if (profile?.role === 'TEAM_LEADER') {
+        payload.tl_id = profile.id;
+      } else if (profile?.role === 'ASSOCIATE') {
+        if (profile.parent_user_id) payload.tl_id = profile.parent_user_id;
+        if (profile.senior_tl_id) payload.stl_id = profile.senior_tl_id;
+      }
       
       let res;
       if (isNewVisit || !currentVisit) {
@@ -308,6 +349,20 @@ export default function UserVisits() {
 
   return (
     <div className="space-y-8 pb-10">
+      {fetchError && (
+        <div className="p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-sm">Failed to fetch visit records</p>
+            <p className="text-xs text-red-600 mt-0.5">{fetchError}</p>
+          </div>
+          <button 
+            onClick={fetchData} 
+            className="px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition-colors shadow-sm"
+          >
+            Retry
+          </button>
+        </div>
+      )}
       
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -535,6 +590,29 @@ export default function UserVisits() {
                   />
                 </div>
                 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-brand-charcoal/70 uppercase tracking-wider mb-2">Location</label>
+                    <input 
+                      type="text" 
+                      value={formData.location}
+                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                      placeholder="e.g. Sector 62, Noida"
+                      className="w-full p-3 border border-brand-soft-grey rounded focus:ring-2 focus:ring-brand-gold outline-none text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-brand-charcoal/70 uppercase tracking-wider mb-2">Project Name</label>
+                    <input 
+                      type="text" 
+                      value={formData.project_name}
+                      onChange={(e) => setFormData({...formData, project_name: e.target.value})}
+                      placeholder="e.g. Green Valley"
+                      className="w-full p-3 border border-brand-soft-grey rounded focus:ring-2 focus:ring-brand-gold outline-none text-sm"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-medium text-brand-charcoal/70 uppercase tracking-wider mb-2">Remarks</label>
                   <textarea 
@@ -618,6 +696,12 @@ export default function UserVisits() {
                   <p className="text-[10px] uppercase tracking-widest text-brand-charcoal/60">Status</p>
                   <p className="font-medium text-brand-deep-navy">{currentVisit.status}</p>
                 </div>
+                {currentVisit.created_at && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-brand-charcoal/60">Submitted At</p>
+                    <p className="font-medium text-brand-deep-navy">{new Date(currentVisit.created_at).toLocaleString()}</p>
+                  </div>
+                )}
               </div>
               
               {currentVisit.selfie_url && (

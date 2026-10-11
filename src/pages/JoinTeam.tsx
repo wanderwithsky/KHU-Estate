@@ -44,6 +44,20 @@ export default function JoinTeam() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const [activeTls, setActiveTls] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadLeaders() {
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('id, user_code, full_name')
+        .eq('role', 'TEAM_LEADER')
+        .order('full_name');
+      if (data) setActiveTls(data);
+    }
+    loadLeaders();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
@@ -58,11 +72,10 @@ export default function JoinTeam() {
       if (formData.role === 'Associate' && formData.referralCode.trim()) {
         const { data: tlData, error: tlError } = await supabase
           .from('user_profiles')
-          .select('id')
-          .eq('user_code', formData.referralCode.trim())
+          .select('id, user_code')
+          .ilike('user_code', formData.referralCode.trim())
           .eq('role', 'TEAM_LEADER')
-          .eq('status', 'ACTIVE')
-          .single();
+          .maybeSingle();
 
         if (tlError || !tlData) {
           throw new Error('Invalid Team Leader Code. Please check the code or leave it blank to submit your application to Admin.');
@@ -270,9 +283,15 @@ export default function JoinTeam() {
                         type="text" 
                         value={formData.referralCode}
                         onChange={(e) => setFormData({...formData, referralCode: e.target.value})}
+                        list="tl-options"
                         className="w-full border border-brand-soft-grey bg-brand-off-white px-4 py-3.5 rounded-lg focus:outline-none focus:border-brand-architectural-blue focus:bg-white transition-colors text-sm" 
-                        placeholder="Enter Team Leader Code" 
+                        placeholder="Enter or select Team Leader Code" 
                       />
+                      <datalist id="tl-options">
+                        {activeTls.map(tl => (
+                          <option key={tl.id} value={tl.user_code}>{tl.full_name} ({tl.user_code})</option>
+                        ))}
+                      </datalist>
                       <p className="text-xs text-brand-charcoal/60 mt-1.5 leading-relaxed">
                         Have a Team Leader Code? Enter it to join directly under that Team Leader. Leave it blank if you don't have one.
                       </p>

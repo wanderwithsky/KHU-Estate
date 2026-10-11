@@ -9,6 +9,7 @@ export default function NotificationsCenter() {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('ALL');
   
@@ -17,7 +18,7 @@ export default function NotificationsCenter() {
       fetchNotifications();
       
       const channel = supabase
-        .channel('public:notifications:center')
+        .channel(`public:notifications:center:${profile.id}`)
         .on(
           'postgres_changes',
           { 
@@ -32,8 +33,14 @@ export default function NotificationsCenter() {
         )
         .subscribe();
 
+      const handleFocus = () => {
+        fetchNotifications();
+      };
+      window.addEventListener('focus', handleFocus);
+
       return () => {
         supabase.removeChannel(channel);
+        window.removeEventListener('focus', handleFocus);
       };
     }
   }, [profile?.id]);
@@ -41,15 +48,23 @@ export default function NotificationsCenter() {
   const fetchNotifications = async () => {
     if (!profile?.id) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('recipient_user_id', profile.id)
-      .order('created_at', { ascending: false })
-      .limit(200); // Reasonable page size
-      
-    if (data) setNotifications(data);
-    setLoading(false);
+    setError(null);
+    try {
+      const { data, error: fetchErr } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('recipient_user_id', profile.id)
+        .order('created_at', { ascending: false })
+        .limit(200); // Reasonable page size
+        
+      if (fetchErr) throw fetchErr;
+      if (data) setNotifications(data);
+    } catch (err: any) {
+      console.error('Error fetching notifications:', err);
+      setError(err.message || 'Failed to load notifications.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const markAsRead = async (id: string, e?: React.MouseEvent) => {
@@ -80,15 +95,32 @@ export default function NotificationsCenter() {
         navigate(`${basePath}/applications`);
         break;
       case 'BUSINESS':
-        navigate(`${basePath}/business`);
+        if (profile?.role === 'ADMIN') navigate('/admin/business');
+        else if (profile?.role === 'SENIOR_TL') navigate('/senior-team-leader/performance');
+        else if (profile?.role === 'TEAM_LEADER') navigate('/team-leader/performance');
+        else if (profile?.role === 'ASSOCIATE') navigate('/associate/self-performance');
         break;
       case 'VISIT':
-        navigate(`${basePath}/plot-visits`);
+        if (profile?.role === 'ADMIN') navigate('/admin/visits');
+        else if (profile?.role === 'SENIOR_TL') navigate('/senior-team-leader/visits');
+        else if (profile?.role === 'TEAM_LEADER') navigate('/team-leader/my-visits');
+        else if (profile?.role === 'ASSOCIATE') navigate('/associate/my-visits');
+        break;
+      case 'COMMISSION':
+        if (profile?.role === 'ADMIN') navigate('/admin/commissions');
+        else if (profile?.role === 'SENIOR_TL') navigate('/senior-team-leader/reports-income');
+        else if (profile?.role === 'TEAM_LEADER') navigate('/team-leader/reports-income');
+        else if (profile?.role === 'ASSOCIATE') navigate('/associate/income');
+        break;
+      case 'PROMOTION':
+        if (profile?.role === 'ADMIN') navigate('/admin/targets');
+        else if (profile?.role === 'SENIOR_TL') navigate('/senior-team-leader/performance');
+        else navigate(`${basePath}/notifications`);
         break;
       case 'USER':
         if (profile?.role === 'ADMIN') {
-          if (notification.type === 'TL_PROMOTED') navigate(`${basePath}/targets`);
-          else navigate(`${basePath}/associates`);
+          if (notification.type === 'TL_PROMOTED') navigate('/admin/targets');
+          else navigate('/admin/team');
         }
         break;
       default:
@@ -127,6 +159,21 @@ export default function NotificationsCenter() {
           <CheckCheck size={16} /> Mark all as read
         </button>
       </div>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg flex items-center justify-between mb-6">
+          <div>
+            <p className="font-semibold text-sm">Error Loading Notifications</p>
+            <p className="text-xs text-red-600 mt-0.5">{error}</p>
+          </div>
+          <button 
+            onClick={fetchNotifications} 
+            className="px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition-colors shadow-sm"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       <div className="bg-white p-4 rounded-lg shadow-sm border border-brand-soft-grey mb-8 flex flex-col sm:flex-row gap-4 items-end">
         <div className="flex-1 w-full">

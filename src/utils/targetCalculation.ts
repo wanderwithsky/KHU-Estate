@@ -57,15 +57,15 @@ export async function fetchTlTargetProgress(userId: string): Promise<TlTargetPro
     const assocList = associates || [];
     const assocIds = assocList.map(a => a.id);
 
-    // 4. Fetch Self Business from stl_self_performance
+    // 4. Fetch personal business from stl_self_performance (both self and downline associates)
+    const allMemberIds = [userId, ...assocIds];
     const { data: selfPerfData } = await supabase
       .from('stl_self_performance')
       .select('*')
-      .eq('stl_id', userId)
+      .in('stl_id', allMemberIds)
       .order('created_at', { ascending: false });
 
     // 5. Fetch business from businesses table (both self and downline)
-    const allMemberIds = [userId, ...assocIds];
     const { data: bizData } = await supabase
       .from('businesses')
       .select(`
@@ -88,17 +88,25 @@ export async function fetchTlTargetProgress(userId: string): Promise<TlTargetPro
     const teamBizList: any[] = [];
     const seenBizIds = new Set<string>();
 
-    // Self performance from stl_self_performance
+    // Self & downline performance from stl_self_performance
     (selfPerfData || []).forEach((r: any) => {
       seenBizIds.add(r.id);
-      selfBizList.push(mapBusinessRecord({
+      const isSelf = r.stl_id === userId;
+      const member = profileMap.get(r.stl_id) || profile;
+      const mapped = mapBusinessRecord({
         ...r,
         created_at: r.created_at || r.business_date,
         deal_amount: r.total_amount,
         notes: r.remarks,
         assigned_user_id: r.stl_id,
         source: 'stl_self_performance'
-      }, profile));
+      }, member);
+
+      if (isSelf) {
+        selfBizList.push(mapped);
+      } else {
+        teamBizList.push(mapped);
+      }
     });
 
     // Businesses from businesses table

@@ -93,6 +93,9 @@ const TEAM_LEADER_MENU: NavSection[] = [
   { label: 'Reports', items: [
       { name: 'Income Report', path: '/team-leader/reports-income', icon: FileText },
   ]},
+  { label: 'Activity', items: [
+      { name: 'My Visits', path: '/team-leader/my-visits', icon: MapPin },
+  ]},
   { label: 'Profile', items: [
       { name: 'My Profile', path: '/team-leader/profile', icon: User },
   ]},

@@ -41,6 +41,13 @@ export default function SeniorTLTeamPerformance() {
           fetchPerformanceData();
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'stl_self_performance' },
+        () => {
+          fetchPerformanceData();
+        }
+      )
       .subscribe();
 
     return () => {
@@ -85,7 +92,7 @@ export default function SeniorTLTeamPerformance() {
         
         const profileMap = new Map(profiles.map(p => [p.id, p]));
 
-        // Fetch Team Business
+        // Fetch Team Business from businesses table
         const { data: teamData } = await supabase
           .from('businesses')
           .select(`
@@ -103,7 +110,35 @@ export default function SeniorTLTeamPerformance() {
           const fallbackUser = profileMap.get(assignedId);
           return mapBusinessRecord(r, fallbackUser);
         });
-        setTeamBusiness(mappedTeam);
+
+        const seenBizIds = new Set(mappedTeam.map(b => b.id));
+
+        // Also fetch personal business from stl_self_performance entered by downline TLs and Associates
+        const { data: teamSelfPerfData } = await supabase
+          .from('stl_self_performance')
+          .select('*')
+          .in('stl_id', profileIds)
+          .order('business_date', { ascending: false });
+
+        const mappedSelfPerf = (teamSelfPerfData || [])
+          .filter((r: any) => !seenBizIds.has(r.id))
+          .map((r: any) => {
+            const member = profileMap.get(r.stl_id);
+            return mapBusinessRecord({
+              ...r,
+              created_at: r.created_at || r.business_date,
+              deal_amount: r.total_amount,
+              notes: r.remarks,
+              assigned_user_id: r.stl_id,
+              source: 'stl_self_performance'
+            }, member);
+          });
+
+        const combinedTeam = [...mappedTeam, ...mappedSelfPerf].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        setTeamBusiness(combinedTeam);
       } else {
         setTeamProfiles([]);
         setTeamBusiness([]);
@@ -402,11 +437,19 @@ export default function SeniorTLTeamPerformance() {
                       <td className="px-6 py-4">
                         {tl ? (
                           <>
-                            <div className="text-brand-deep-navy">{tl.full_name}</div>
-                            <div className="text-xs text-brand-charcoal/60">{tl.user_code}</div>
+                            <div className="text-brand-deep-navy font-medium">{tl.full_name}</div>
+                            <div className="text-xs text-brand-charcoal/60 font-mono">{tl.user_code}</div>
+                          </>
+                        ) : assoc.parent_user_id === profile?.id ? (
+                          <>
+                            <div className="text-brand-deep-navy font-medium">{profile?.full_name || 'Senior TL'}</div>
+                            <div className="text-xs text-brand-architectural-blue font-semibold">Reporting STL (Direct)</div>
                           </>
                         ) : (
-                          <span className="text-xs text-gray-400 italic">Direct to STL</span>
+                          <>
+                            <div className="text-brand-deep-navy font-medium">{profile?.full_name || 'Senior TL'}</div>
+                            <div className="text-xs text-brand-architectural-blue">Reporting STL</div>
+                          </>
                         )}
                       </td>
                       <td className="px-6 py-4 text-right font-medium">{assoc.businessRecords}</td>
