@@ -45,25 +45,25 @@ export default function BusinessSpreadsheet({
     ];
     
     const rows = records.map(r => [
-      r.customer_name,
-      r.phone,
-      r.address,
-      r.project_name,
-      r.area_sqft.toString(),
+      r.customer_name || '',
+      r.phone || '',
+      r.address || '',
+      r.project_name || '',
+      (r.area_sqft ?? 0).toString(),
       (r.deal_amount || r.total_amount || 0).toString(),
-      r.booking_amount.toString(),
-      r.commission_percent.toString(),
-      r.total_income.toString(),
-      r.balance_amount.toString(),
+      (r.booking_amount ?? 0).toString(),
+      (r.commission_percent ?? 0).toString(),
+      (r.total_income ?? 0).toString(),
+      (r.balance_amount ?? 0).toString(),
       r.notes || '',
       r.user_profiles?.user_code || '',
       r.user_profiles?.full_name || '',
-      new Date(r.created_at).toLocaleDateString()
+      r.created_at ? new Date(r.created_at).toLocaleDateString() : ''
     ]);
     
     const csvContent = [
       headers.join(','),
-      ...rows.map(e => e.map(f => `"${f.replace(/"/g, '""')}"`).join(','))
+      ...rows.map(e => e.map(f => `"${String(f ?? '').replace(/"/g, '""')}"`).join(','))
     ].join('\n');
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -89,6 +89,8 @@ export default function BusinessSpreadsheet({
 
     alert('CSV exported successfully.');
   };
+
+  const hasActions = isAdmin || !!onView;
 
   return (
     <div className="bg-white border border-brand-soft-grey shadow-sm overflow-hidden rounded-lg flex flex-col w-full h-[600px]">
@@ -119,13 +121,13 @@ export default function BusinessSpreadsheet({
               <th className="p-3 border border-brand-charcoal/30 font-semibold text-right bg-brand-deep-navy">BALANCE</th>
               <th className="p-3 border border-brand-charcoal/30 font-semibold bg-brand-deep-navy">REMARKS</th>
               <th className="p-3 border border-brand-charcoal/30 font-semibold bg-brand-deep-navy">DATE</th>
-              {isAdmin && <th className="p-3 border border-brand-charcoal/30 font-semibold text-center bg-brand-deep-navy sticky right-0">ACTIONS</th>}
+              {hasActions && <th className="p-3 border border-brand-charcoal/30 font-semibold text-center bg-brand-deep-navy sticky right-0">ACTIONS</th>}
             </tr>
           </thead>
           <tbody className="bg-white">
             {records.length === 0 ? (
               <tr>
-                <td colSpan={isAdmin ? 14 : 12} className="p-8 text-center text-brand-charcoal/60">
+                <td colSpan={(isAdmin ? 1 : 0) + 12 + (hasActions ? 1 : 0)} className="p-8 text-center text-brand-charcoal/60">
                   <div className="flex flex-col items-center justify-center space-y-2">
                     <p className="text-lg font-serif">No Business Records Yet</p>
                     <p className="text-sm">Your business details will appear here when records are assigned.</p>
@@ -152,15 +154,19 @@ export default function BusinessSpreadsheet({
                   <td className="p-2 border-r border-brand-soft-grey text-right text-red-700">{formatCurrency(record.balance_amount)}</td>
                   <td className="p-2 border-r border-brand-soft-grey text-brand-charcoal max-w-[200px] truncate" title={record.notes}>{record.notes || '-'}</td>
                   <td className="p-2 border-r border-brand-soft-grey text-brand-charcoal text-xs">{new Date(record.created_at).toLocaleDateString()}</td>
-                  {isAdmin && (
+                  {hasActions && (
                     <td className="p-2 text-center sticky right-0 bg-white group-hover:bg-brand-primary/5 border-l border-brand-soft-grey">
                       <div className="flex justify-center gap-2">
-                        <button onClick={() => onView?.(record)} className="p-1.5 text-brand-architectural-blue hover:bg-brand-architectural-blue/10 rounded" title="View">
-                          <Eye size={16} />
-                        </button>
-                        <button onClick={() => onEdit?.(record)} className="p-1.5 text-amber-600 hover:bg-amber-100 rounded" title="Edit">
-                          <Edit size={16} />
-                        </button>
+                        {onView && (
+                          <button onClick={() => onView(record)} className="p-1.5 text-brand-architectural-blue hover:bg-brand-architectural-blue/10 rounded" title="View">
+                            <Eye size={16} />
+                          </button>
+                        )}
+                        {isAdmin && onEdit && (
+                          <button onClick={() => onEdit(record)} className="p-1.5 text-amber-600 hover:bg-amber-100 rounded" title="Edit">
+                            <Edit size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   )}

@@ -192,7 +192,7 @@ function App() {
             
             <Route path="leads" element={<Navigate to="/team-leader" replace />} />
             <Route path="clients" element={<Navigate to="/team-leader" replace />} />
-            <Route path="business" element={<Navigate to="/team-leader" replace />} />
+            <Route path="business" element={<MyBusiness />} />
             <Route path="deals" element={<Navigate to="/team-leader" replace />} />
             
             <Route path="plot-visits" element={<Navigate to="/team-leader/my-visits" replace />} />

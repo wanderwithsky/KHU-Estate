@@ -4,7 +4,7 @@ import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { 
   Plus, X, Download, Briefcase, IndianRupee, TrendingUp, 
-  Search, RefreshCw, CheckCircle, AlertCircle 
+  Search, RefreshCw, CheckCircle, AlertCircle, Lock 
 } from 'lucide-react';
 
 export default function AssociateSelfPerformance() {
@@ -91,13 +91,15 @@ export default function AssociateSelfPerformance() {
   const calculateFields = (data: typeof formData) => {
     const total = Number(data.total_amount) || 0;
     const booking = Number(data.booking_amount) || 0;
-    const rate = Number(data.commission_percent) || 5;
+    // Permanently fixed to standard Associate rate of 5%
+    const rate = 5;
     
     const balance = Math.max(0, total - booking);
     const income = (total * rate) / 100;
 
     return {
       ...data,
+      commission_percent: '5',
       balance_amount: balance.toString(),
       total_income: income.toString()
     };
@@ -105,6 +107,8 @@ export default function AssociateSelfPerformance() {
 
   const handleNumericChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    // commission_percent is locked and cannot be changed via numeric change
+    if (name === 'commission_percent') return;
     const updated = { ...formData, [name]: value };
     setFormData(calculateFields(updated));
   };
@@ -140,7 +144,8 @@ export default function AssociateSelfPerformance() {
       }
 
       const balanceNum = Math.max(0, totalNum - bookingNum);
-      const commissionRate = Number(formData.commission_percent) || 5;
+      // Strictly enforce standard Associate commission rate of 5%
+      const commissionRate = 5;
       const incomeNum = (totalNum * commissionRate) / 100;
 
       const payload = {
@@ -670,16 +675,18 @@ export default function AssociateSelfPerformance() {
                       Associate Commission Rate (%)
                     </label>
                     <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        name="commission_percent"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        value={formData.commission_percent}
-                        onChange={handleNumericChange}
-                        className="w-24 border border-gray-200 rounded-md p-2 text-sm bg-white font-mono"
-                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          name="commission_percent"
+                          readOnly
+                          disabled
+                          tabIndex={-1}
+                          value="5%"
+                          className="w-24 border border-blue-200 rounded-md py-2 pl-3 pr-8 text-sm bg-blue-100/70 text-blue-900 font-mono font-bold cursor-not-allowed select-none shadow-inner"
+                        />
+                        <Lock size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-blue-700 pointer-events-none" />
+                      </div>
                       <span className="text-xs text-gray-500 font-medium">Standard Associate rate is 5%</span>
                     </div>
                   </div>

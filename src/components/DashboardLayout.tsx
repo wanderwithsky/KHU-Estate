@@ -88,6 +88,7 @@ const TEAM_LEADER_MENU: NavSection[] = [
   { label: 'Performance', items: [
       { name: 'Self Performance', path: '/team-leader/self-performance', icon: Activity },
       { name: 'Team Performance', path: '/team-leader/performance', icon: BarChart3 },
+      { name: 'Total Business', path: '/team-leader/business', icon: Briefcase },
       { name: 'Targets', path: '/team-leader/targets', icon: Target },
   ]},
   { label: 'Reports', items: [

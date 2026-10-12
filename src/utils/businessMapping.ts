@@ -18,6 +18,7 @@ export interface MappedBusinessRecord {
   total_income: number;
   balance_amount: number;
   notes: string;
+  address?: string;
   assigned_user_id?: string;
   user_profiles?: {
     id?: string;
@@ -72,6 +73,7 @@ export function mapBusinessRecord(r: any, fallbackUser?: any): MappedBusinessRec
     total_income: isNaN(incomeAmt) ? 0 : incomeAmt,
     balance_amount: isNaN(balanceAmt) ? 0 : balanceAmt,
     notes: (r.notes || r.remarks || '').trim(),
+    address: formatBusinessField(r.address, ''),
     assigned_user_id: assignedId,
     user_profiles: userProfile,
     source: r.source || (r.business_date && !r.deal_amount ? 'stl_self_performance' : 'businesses'),

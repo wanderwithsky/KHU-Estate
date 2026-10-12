@@ -9,6 +9,8 @@ export default function AdminAssociatePerformance() {
   const [associates, setAssociates] = useState<any[]>([]);
   const [selectedAssociate, setSelectedAssociate] = useState<string>('');
   
+  const [error, setError] = useState<string | null>(null);
+  
   // Data
   const [selfBusiness, setSelfBusiness] = useState<MappedBusinessRecord[]>([]);
   
@@ -29,47 +31,68 @@ export default function AdminAssociatePerformance() {
       fetchPerformanceData();
     } else {
       setSelfBusiness([]);
+      setError(null);
     }
   }, [selectedAssociate]);
 
   useEffect(() => {
-    // Real-time subscription for businesses table
+    if (!selectedAssociate) return;
+
+    // Real-time subscription for both businesses and stl_self_performance tables
     const channel = supabase
-      .channel('businesses_changes_assoc')
+      .channel(`admin_assoc_perf_${selectedAssociate}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'businesses' },
         () => {
-          if (selectedAssociate) {
-            fetchPerformanceData();
-          }
+          fetchPerformanceData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'stl_self_performance' },
+        () => {
+          fetchPerformanceData();
         }
       )
       .subscribe();
 
+    const handleFocus = () => {
+      fetchPerformanceData();
+    };
+    window.addEventListener('focus', handleFocus);
+
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('focus', handleFocus);
     };
   }, [selectedAssociate]);
 
   const fetchAssociates = async () => {
-    const { data } = await supabase
-      .from('user_profiles')
-      .select('id, user_code, full_name')
-      .eq('role', 'ASSOCIATE')
-      .eq('status', 'ACTIVE')
-      .order('full_name');
-      
-    if (data) setAssociates(data);
+    try {
+      const { data, error: assocErr } = await supabase
+        .from('user_profiles')
+        .select('id, user_code, full_name')
+        .eq('role', 'ASSOCIATE')
+        .eq('status', 'ACTIVE')
+        .order('full_name');
+        
+      if (assocErr) throw assocErr;
+      if (data) setAssociates(data);
+    } catch (err: any) {
+      console.error('Error fetching associates list:', err.message);
+      setError(err.message || 'Failed to load associates list');
+    }
   };
 
   const fetchPerformanceData = async () => {
     setLoading(true);
+    setError(null);
     try {
       const currentAssociate = associates.find(a => a.id === selectedAssociate);
 
-      // Fetch Associate's self business
-      const { data: selfData } = await supabase
+      // 1. Fetch Associate's records from businesses table (Admin-assigned or direct)
+      const { data: selfData, error: bizErr } = await supabase
         .from('businesses')
         .select(`
           *,
@@ -80,11 +103,43 @@ export default function AdminAssociatePerformance() {
         `)
         .or(`associate_id.eq.${selectedAssociate},assigned_user_id.eq.${selectedAssociate}`)
         .order('created_at', { ascending: false });
-        
-      const mappedSelf = (selfData || []).map((r: any) => mapBusinessRecord(r, currentAssociate));
-      setSelfBusiness(mappedSelf);
-    } catch (error) {
-      console.error('Error fetching performance:', error);
+
+      if (bizErr) throw bizErr;
+
+      // 2. Fetch Associate's personally submitted Self Performance records from stl_self_performance table
+      const { data: selfPerfData, error: selfPerfErr } = await supabase
+        .from('stl_self_performance')
+        .select('*')
+        .eq('stl_id', selectedAssociate)
+        .order('created_at', { ascending: false });
+
+      if (selfPerfErr) throw selfPerfErr;
+
+      // Map business records
+      const mappedBiz = (selfData || []).map((r: any) => mapBusinessRecord(r, currentAssociate));
+      const existingBizIds = new Set(mappedBiz.map(b => b.id));
+
+      // Map stl_self_performance records without duplicating
+      const mappedSelfPerf = (selfPerfData || [])
+        .filter((r: any) => !existingBizIds.has(r.id))
+        .map((r: any) => mapBusinessRecord({
+          ...r,
+          created_at: r.created_at || r.business_date,
+          deal_amount: r.total_amount,
+          notes: r.remarks,
+          assigned_user_id: r.stl_id,
+          source: 'stl_self_performance'
+        }, currentAssociate));
+
+      // Combine and sort chronologically descending
+      const combined = [...mappedBiz, ...mappedSelfPerf].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      setSelfBusiness(combined);
+    } catch (err: any) {
+      console.error('Error fetching performance:', err);
+      setError(err.message || 'Failed to fetch associate performance records');
     } finally {
       setLoading(false);
     }
@@ -176,6 +231,15 @@ export default function AdminAssociatePerformance() {
           {loading && <RefreshCw size={20} className="animate-spin text-brand-architectural-blue" />}
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-6 flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => selectedAssociate && fetchPerformanceData()} className="text-xs font-semibold underline hover:no-underline ml-4">
+            Retry
+          </button>
+        </div>
+      )}
 
       {selectedAssociate && (
         <>
