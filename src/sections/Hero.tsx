@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, MapPin } from 'lucide-react';
+import { ArrowRight, MapPin, Phone } from 'lucide-react';
 
 const heroImages = [
+  "https://res.cloudinary.com/hmjaaen2/image/upload/v1791888421/45371c0c-bdca-40cd-9775-f967bc89c65a.jpg", // Image 10: Robertsganj Site Entrance & Infrastructure
+  "https://res.cloudinary.com/hmjaaen2/image/upload/v1791888398/57ceb1fe-7464-4b3d-8e51-db084dfa55e8.jpg", // Image 5: Site Access Road & Gateway
+  "https://res.cloudinary.com/hmjaaen2/image/upload/v1791888448/541f9fbe-7cd6-47c5-91f0-b91b9cce2811.jpg", // Image 12: Demarcated Plots with Boundary Markers
   "/images/home_hero.jpg",
-  "/images/projects/project_happy_home.jpg",
-  "/images/projects/project_nature_city.jpg",
-  "/images/projects/project_residential.jpg",
-  "/images/projects/project_highway.jpg",
 ];
 
 const fadeUp = {
@@ -116,19 +115,21 @@ export default function Hero() {
             </motion.p>
             
             {/* CTA Buttons */}
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4">
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center flex-wrap">
+              <a 
+                href="tel:+916394247451"
+                className="group flex items-center justify-center gap-3 px-8 py-4 bg-[#d4af37] text-brand-deep-navy text-sm tracking-widest uppercase font-bold hover:bg-white hover:text-brand-deep-navy transition-all duration-300 shadow-xl hover:scale-[1.02]"
+                aria-label="Call KHU Developers directly at 6394247451"
+              >
+                <Phone size={16} className="fill-brand-deep-navy/20" />
+                <span>Call Now: 6394247451</span>
+              </a>
               <Link 
                 to="/projects" 
-                className="group flex items-center justify-center gap-3 px-8 py-4 bg-[#d4af37] text-brand-deep-navy text-sm tracking-widest uppercase font-bold hover:bg-white hover:text-brand-deep-navy transition-all duration-300 shadow-lg"
+                className="group flex items-center justify-center gap-3 px-8 py-4 bg-white/10 hover:bg-white text-white hover:text-brand-deep-navy border border-white/30 text-sm tracking-widest uppercase font-medium backdrop-blur-sm transition-all duration-300"
               >
-                Explore Our Projects
+                <span>Explore Projects</span>
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link 
-                to="/contact" 
-                className="flex items-center justify-center px-8 py-4 border border-white text-white text-sm tracking-widest uppercase font-medium hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
-              >
-                Get In Touch
               </Link>
             </motion.div>
           </motion.div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { Phone, MapPin, Mail } from 'lucide-react';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -60,22 +61,55 @@ export default function Contact() {
           <h1 className="text-5xl md:text-7xl font-serif text-brand-deep-navy tracking-tight mb-8 leading-tight">
             LET'S TALK <br /> PROPERTY.
           </h1>
-          <p className="text-xl text-brand-charcoal/70 font-light max-w-md leading-relaxed mb-16">
+          <p className="text-xl text-brand-charcoal/70 font-light max-w-md leading-relaxed mb-12">
             Whether you're looking for a residential plot or a commercial investment, we are here to provide clear and actionable guidance.
           </p>
 
-          <div className="space-y-8">
-            <div>
-              <span className="text-xs tracking-[0.2em] text-brand-architectural-blue uppercase font-bold mb-2 block">
-                Office
+          <div className="space-y-6 mb-12">
+            {/* Primary Phone Card */}
+            <div className="bg-white p-6 border-l-4 border-brand-gold shadow-sm">
+              <span className="text-xs tracking-[0.2em] text-brand-charcoal/50 uppercase font-bold mb-2 block flex items-center gap-2">
+                <Phone size={14} className="text-brand-gold" />
+                Direct Calling Number
               </span>
-              <p className="text-brand-deep-navy text-lg">Robertsganj, Sonbhadra<br />Uttar Pradesh</p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+                <div>
+                  <a 
+                    href="tel:+916394247451" 
+                    className="text-3xl font-serif text-brand-deep-navy font-bold hover:text-brand-architectural-blue transition-colors tracking-wide block"
+                  >
+                    6394247451
+                  </a>
+                  <p className="text-xs text-brand-charcoal/60 mt-1">Direct support for plots, site visits, and project enquiries</p>
+                </div>
+                <a
+                  href="tel:+916394247451"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-brand-deep-navy hover:bg-brand-architectural-blue text-white text-xs tracking-widest uppercase font-bold transition-all shadow-md shrink-0 hover:scale-105"
+                  aria-label="Call 6394247451 now"
+                >
+                  <Phone size={14} />
+                  <span>Call Us</span>
+                </a>
+              </div>
             </div>
-            <div>
-              <span className="text-xs tracking-[0.2em] text-brand-architectural-blue uppercase font-bold mb-2 block">
-                Contact
+
+            {/* Office Location */}
+            <div className="p-6 bg-white/70 border border-brand-soft-grey">
+              <span className="text-xs tracking-[0.2em] text-brand-architectural-blue uppercase font-bold mb-2 block flex items-center gap-2">
+                <MapPin size={14} />
+                Registered Office
               </span>
-              <p className="text-brand-deep-navy text-lg">Call or WhatsApp<br />Email Enquiries</p>
+              <p className="text-brand-deep-navy text-base font-medium">Robertsganj, Sonbhadra, Uttar Pradesh</p>
+              <p className="text-xs text-brand-charcoal/60 mt-1">Visits available by appointment or direct telephone call</p>
+            </div>
+
+            {/* Email Support */}
+            <div className="p-6 bg-white/70 border border-brand-soft-grey">
+              <span className="text-xs tracking-[0.2em] text-brand-architectural-blue uppercase font-bold mb-2 block flex items-center gap-2">
+                <Mail size={14} />
+                Enquiry Mode
+              </span>
+              <p className="text-brand-deep-navy text-base">Direct Phone Call, WhatsApp & Online Enquiries</p>
             </div>
           </div>
         </div>

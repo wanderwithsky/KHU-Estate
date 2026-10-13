@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Hero from '../sections/Hero';
 import ScrollProgressBar from '../components/ScrollProgressBar';
 import { projects } from '../data/projects';
-import { ArrowRight, MapPin, ChevronDown } from 'lucide-react';
+import { ArrowRight, MapPin, ChevronDown, Phone } from 'lucide-react';
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -97,11 +97,12 @@ export default function Home() {
               </motion.div>
             </div>
             
-            <motion.div variants={fadeIn} className="relative aspect-[4/5] overflow-hidden group">
+            <motion.div variants={fadeIn} className="relative aspect-[4/5] overflow-hidden group shadow-lg">
               <img 
-                src="/images/services/services_hero_1790313568637.jpg" 
-                alt="Rooted in the Land" 
-                className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
+                src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888225/1a63fa1c-3a0d-497b-9cc3-0cedb6325107.jpg" 
+                alt="Active site development and land leveling at KHU Developers project" 
+                className="w-full h-full object-cover object-center transition-transform duration-[2s] group-hover:scale-105"
+                loading="lazy"
               />
             </motion.div>
           </motion.div>
@@ -229,8 +230,13 @@ export default function Home() {
               </motion.div>
             </motion.div>
             
-            <motion.div initial={{opacity:0, x:30}} whileInView={{opacity:1, x:0}} viewport={{once:true}} transition={{duration:0.8}} className="relative aspect-[4/3] overflow-hidden group">
-              <img src="/images/projects/proj4_vikas_nagar_1790313019947.jpg" alt="Our Approach" className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105" />
+            <motion.div initial={{opacity:0, x:30}} whileInView={{opacity:1, x:0}} viewport={{once:true}} transition={{duration:0.8}} className="relative aspect-[4/3] overflow-hidden group shadow-lg">
+              <img 
+                src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888412/07e03829-596e-4f24-929a-953575e4651c.jpg" 
+                alt="Infrastructure and paved internal roadway construction at KHU Developers colony" 
+                className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105" 
+                loading="lazy"
+              />
             </motion.div>
           </div>
 
@@ -278,6 +284,244 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 07B. REAL ESTATE GALLERY / SITE DEVELOPMENTS */}
+      <section className="py-24 md:py-36 bg-brand-warm-white border-t border-brand-charcoal/10">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <motion.div 
+            initial="hidden" 
+            whileInView="visible" 
+            viewport={{ once: true }} 
+            variants={staggerContainer} 
+            className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6"
+          >
+            <div>
+              <motion.span variants={fadeIn} className="text-xs tracking-[0.2em] text-brand-gold uppercase font-bold mb-4 block">
+                ON-SITE PROGRESS & DEVELOPMENTS
+              </motion.span>
+              <motion.h2 variants={fadeIn} className="text-4xl md:text-5xl lg:text-6xl font-serif text-brand-deep-navy leading-tight">
+                Authentic Groundwork.<br />Active Site Developments.
+              </motion.h2>
+            </div>
+            <motion.p variants={fadeIn} className="text-brand-charcoal/70 text-base md:text-lg font-light max-w-md">
+              A transparent glimpse into our actual plotted sites across Robertsganj, Ghorawal, and Salkhan. From initial land survey to road demarcation and colony entrances.
+            </motion.p>
+          </motion.div>
+
+          {/* Curated Balanced Gallery Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {/* Card 1: Main Site Entrance (Image 10) */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              className="group bg-white rounded-lg overflow-hidden border border-brand-soft-grey shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
+            >
+              <div className="relative aspect-[16/10] overflow-hidden bg-brand-soft-grey">
+                <img 
+                  src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888421/45371c0c-bdca-40cd-9775-f967bc89c65a.jpg" 
+                  alt="KHU Developers project signboard at site entrance in Robertsganj" 
+                  className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute top-4 left-4 bg-brand-deep-navy/90 text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded">
+                  Site Entrance
+                </div>
+              </div>
+              <div className="p-6 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-serif text-xl text-brand-deep-navy mb-2 group-hover:text-brand-architectural-blue transition-colors">
+                    Robertsganj Project Entry
+                  </h3>
+                  <p className="text-xs text-brand-charcoal/70 font-light leading-relaxed mb-4">
+                    Official KHU Developers site marker, gated entry pathway, and leveled access avenue.
+                  </p>
+                </div>
+                <div className="pt-4 border-t border-brand-soft-grey flex items-center justify-between text-xs text-brand-charcoal/60">
+                  <span>Robertsganj, Sonbhadra</span>
+                  <span className="text-brand-gold font-medium">On-Site</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 2: Wide Plotted Land with Road & Flags (Image 12) */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.1 }}
+              className="group bg-white rounded-lg overflow-hidden border border-brand-soft-grey shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
+            >
+              <div className="relative aspect-[16/10] overflow-hidden bg-brand-soft-grey">
+                <img 
+                  src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888448/541f9fbe-7cd6-47c5-91f0-b91b9cce2811.jpg" 
+                  alt="Plotted colony layout with marked brick boundaries and celebratory flags" 
+                  className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute top-4 left-4 bg-brand-primary text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded">
+                  Plot Demarcation
+                </div>
+              </div>
+              <div className="p-6 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-serif text-xl text-brand-deep-navy mb-2 group-hover:text-brand-architectural-blue transition-colors">
+                    Active Colony Layout
+                  </h3>
+                  <p className="text-xs text-brand-charcoal/70 font-light leading-relaxed mb-4">
+                    Individual plot boundaries visibly laid with brickwork and access roads during customer site visits.
+                  </p>
+                </div>
+                <div className="pt-4 border-t border-brand-soft-grey flex items-center justify-between text-xs text-brand-charcoal/60">
+                  <span>Plotted Township</span>
+                  <span className="text-brand-gold font-medium">Demarcated</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 3: Boundary Wall Construction (Image 4) */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="group bg-white rounded-lg overflow-hidden border border-brand-soft-grey shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
+            >
+              <div className="relative aspect-[16/10] overflow-hidden bg-brand-soft-grey">
+                <img 
+                  src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888390/65bbf04d-4b57-4fce-a1b7-975a71dc7f50.jpg" 
+                  alt="Ground-level boundary masonry and plot demarcation work" 
+                  className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute top-4 left-4 bg-brand-architectural-blue text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded">
+                  Civil Groundwork
+                </div>
+              </div>
+              <div className="p-6 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-serif text-xl text-brand-deep-navy mb-2 group-hover:text-brand-architectural-blue transition-colors">
+                    Boundary Masonry & Foundation
+                  </h3>
+                  <p className="text-xs text-brand-charcoal/70 font-light leading-relaxed mb-4">
+                    Brick alignment and foundation trenches delineating demarcated plots for future owners.
+                  </p>
+                </div>
+                <div className="pt-4 border-t border-brand-soft-grey flex items-center justify-between text-xs text-brand-charcoal/60">
+                  <span>Site Development</span>
+                  <span className="text-brand-gold font-medium">In Progress</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 4: Main Access Road with Flags (Image 5) */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              className="group bg-white rounded-lg overflow-hidden border border-brand-soft-grey shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
+            >
+              <div className="relative aspect-[16/10] overflow-hidden bg-brand-soft-grey">
+                <img 
+                  src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888398/57ceb1fe-7464-4b3d-8e51-db084dfa55e8.jpg" 
+                  alt="Wide internal gravel corridor leading towards project ceremonial welcome gate" 
+                  className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute top-4 left-4 bg-brand-deep-navy/90 text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded">
+                  Internal Roadway
+                </div>
+              </div>
+              <div className="p-6 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-serif text-xl text-brand-deep-navy mb-2 group-hover:text-brand-architectural-blue transition-colors">
+                    Entrance Avenue & Passage
+                  </h3>
+                  <p className="text-xs text-brand-charcoal/70 font-light leading-relaxed mb-4">
+                    Naturally shaded, well-graded connectivity road built to handle vehicular movement and site visits.
+                  </p>
+                </div>
+                <div className="pt-4 border-t border-brand-soft-grey flex items-center justify-between text-xs text-brand-charcoal/60">
+                  <span>Connectivity Road</span>
+                  <span className="text-brand-gold font-medium">Accessible</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 5: Drainage & Underground Utilities (Image 11) */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.1 }}
+              className="group bg-white rounded-lg overflow-hidden border border-brand-soft-grey shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
+            >
+              <div className="relative aspect-[16/10] overflow-hidden bg-brand-soft-grey">
+                <img 
+                  src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888435/b8b20d58-2660-4b1b-acf0-7fdd09b2a5c9.jpg" 
+                  alt="Underground concrete drainage pipe installation and utility trenching" 
+                  className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute top-4 left-4 bg-brand-primary text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded">
+                  Drainage System
+                </div>
+              </div>
+              <div className="p-6 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-serif text-xl text-brand-deep-navy mb-2 group-hover:text-brand-architectural-blue transition-colors">
+                    Underground Infrastructure
+                  </h3>
+                  <p className="text-xs text-brand-charcoal/70 font-light leading-relaxed mb-4">
+                    High-capacity pipeline installation ensuring robust rainwater management and planned utility drainage.
+                  </p>
+                </div>
+                <div className="pt-4 border-t border-brand-soft-grey flex items-center justify-between text-xs text-brand-charcoal/60">
+                  <span>Colony Infrastructure</span>
+                  <span className="text-brand-gold font-medium">Underground</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 6: Clean Bitumen Road Paving (Image 8) */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="group bg-white rounded-lg overflow-hidden border border-brand-soft-grey shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
+            >
+              <div className="relative aspect-[16/10] overflow-hidden bg-brand-soft-grey">
+                <img 
+                  src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888412/07e03829-596e-4f24-929a-953575e4651c.jpg" 
+                  alt="Freshly paved bituminous road surface with perimeter boundary fencing" 
+                  className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute top-4 left-4 bg-brand-architectural-blue text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded">
+                  Paved Roads
+                </div>
+              </div>
+              <div className="p-6 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-serif text-xl text-brand-deep-navy mb-2 group-hover:text-brand-architectural-blue transition-colors">
+                    Completed Roadways
+                  </h3>
+                  <p className="text-xs text-brand-charcoal/70 font-light leading-relaxed mb-4">
+                    Blacktop internal access pathways with perimeter compound walls ready for property builders.
+                  </p>
+                </div>
+                <div className="pt-4 border-t border-brand-soft-grey flex items-center justify-between text-xs text-brand-charcoal/60">
+                  <span>Plotted Community</span>
+                  <span className="text-brand-gold font-medium">Paved</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* 08. REAL ESTATE JOURNEY */}
       <section className="py-32 md:py-48 bg-brand-off-white overflow-hidden">
         <div className="max-w-4xl mx-auto px-6 text-center">
@@ -316,12 +560,30 @@ export default function Home() {
               
               <motion.div variants={fadeIn} className="flex flex-col gap-6 mb-12 border-l-2 border-brand-gold pl-6">
                 <div>
+                  <span className="block text-xs font-bold tracking-widest uppercase text-brand-charcoal/50 mb-1">Direct Phone Enquiries</span>
+                  <a 
+                    href="tel:+916394247451" 
+                    className="inline-flex items-center gap-2 text-2xl font-serif text-brand-deep-navy font-bold hover:text-brand-architectural-blue transition-colors group"
+                  >
+                    <Phone size={20} className="text-brand-gold group-hover:scale-110 transition-transform" />
+                    <span>6394247451</span>
+                  </a>
+                  <span className="block text-xs text-brand-charcoal/60 mt-1">Available for project inquiries, site visits & plots guidance</span>
+                </div>
+                <div>
                   <span className="block text-xs font-bold tracking-widest uppercase text-brand-charcoal/50 mb-1">Registered Office</span>
                   <span className="block text-brand-deep-navy font-medium">Robertsganj, Sonbhadra, Uttar Pradesh</span>
                 </div>
               </motion.div>
 
-              <motion.div variants={fadeIn}>
+              <motion.div variants={fadeIn} className="flex flex-wrap gap-4 items-center">
+                <a 
+                  href="tel:+916394247451" 
+                  className="inline-flex items-center gap-3 bg-brand-gold text-brand-deep-navy px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-brand-architectural-blue hover:text-white transition-all shadow-md hover:scale-[1.02]"
+                >
+                  <Phone size={16} />
+                  <span>Call Now: 6394247451</span>
+                </a>
                 <Link to="/contact" className="inline-flex items-center gap-3 bg-brand-deep-navy text-white px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-brand-architectural-blue transition-colors">
                   Open Contact Page <ArrowRight size={16} />
                 </Link>
@@ -418,12 +680,19 @@ export default function Home() {
             Explore KHU Developers projects or connect with our team.
           </motion.p>
           
-          <motion.div initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{delay:0.2}} className="flex flex-col sm:flex-row gap-6 justify-center">
+          <motion.div initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{delay:0.2}} className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center flex-wrap">
+            <a 
+              href="tel:+916394247451" 
+              className="inline-flex items-center gap-3 px-8 py-4 bg-brand-gold text-brand-deep-navy text-sm tracking-widest uppercase font-bold hover:bg-white hover:text-brand-deep-navy transition-all shadow-xl hover:scale-105"
+            >
+              <Phone size={16} />
+              <span>Call Now: 6394247451</span>
+            </a>
             <Link to="/projects" className="px-8 py-4 bg-white text-brand-deep-navy text-sm tracking-widest uppercase font-bold hover:bg-brand-architectural-blue hover:text-white transition-colors">
               EXPLORE PROJECTS &rarr;
             </Link>
             <Link to="/contact" className="px-8 py-4 border border-white text-white text-sm tracking-widest uppercase font-bold hover:bg-white/10 transition-colors">
-              GET IN TOUCH &rarr;
+              ENQUIRE ONLINE &rarr;
             </Link>
           </motion.div>
         </div>

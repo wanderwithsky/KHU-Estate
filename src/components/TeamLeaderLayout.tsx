@@ -38,7 +38,7 @@ export default function TeamLeaderLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto flex flex-col">
+      <main id="main-scroll-container" data-main-scroll="true" className="flex-1 overflow-auto flex flex-col">
         <header className="bg-white border-b border-brand-soft-grey p-6 flex justify-between items-center shadow-sm">
           <h1 className="text-xl font-serif text-brand-deep-navy">Team Leader Dashboard</h1>
         </header>

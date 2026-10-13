@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useHeartbeat } from './hooks/useHeartbeat';
 import Layout from './layouts/Layout';
+import ScrollToTop from './components/ScrollToTop';
 import PwaInstallPopup from './components/PwaInstallPopup';
 import Home from './pages/Home';
 import Projects from './pages/Projects';
@@ -92,6 +93,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           {/* Public Routes with Navbar & Footer */}
           <Route path="/" element={<Layout />}>

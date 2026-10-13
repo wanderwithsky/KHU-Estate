@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useAuth } from '../context/AuthContext';
@@ -134,9 +134,14 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mainScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMobileMenuOpen(false);
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      mainScrollRef.current.scrollTop = 0;
+    }
   }, [location.pathname]);
 
   const handleLogout = async () => {
@@ -276,7 +281,12 @@ export default function DashboardLayout() {
         </header>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-auto bg-brand-warm-white/50 relative">
+        <div 
+          id="main-scroll-container"
+          data-main-scroll="true"
+          ref={mainScrollRef}
+          className="flex-1 overflow-auto bg-brand-warm-white/50 relative"
+        >
           <div className="absolute inset-0 p-4 lg:p-8">
             <Outlet />
           </div>

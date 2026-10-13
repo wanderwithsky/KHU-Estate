@@ -73,7 +73,7 @@ export const projects: Project[] = [
     developer: "K.H.U Developers Pvt. Ltd.",
     type: "Highway Adjacent Plots",
     description: "Prime highway-adjacent plots located on the Varanasi-Shaktinagar Marg, ensuring unparalleled visibility and long-term commercial potential.",
-    coverImage: "/images/projects/proj6_mangleshwar_1790313070072.jpg",
+    coverImage: "https://res.cloudinary.com/hmjaaen2/image/upload/v1791888235/f7ab8ba4-7392-4547-b52d-93c6becee396.jpg", // Image 3: Salkhan Varanasi Road Project Site
     amenities: ["Shopping Complex", "24x7 Security", "Drainage Facility", "Park"]
   },
   {

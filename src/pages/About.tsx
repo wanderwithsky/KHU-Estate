@@ -94,10 +94,10 @@ export default function About() {
               transition={{ duration: 1 }}
               className="w-full lg:w-1/2"
             >
-              <div className="aspect-[4/5] overflow-hidden">
+              <div className="aspect-[4/5] overflow-hidden rounded-lg shadow-lg">
                 <img 
-                  src="/images/about/story_surveyors.jpg" 
-                  alt="Indian property professionals surveying a plotted development" 
+                  src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888406/d5c71aa8-a725-4007-b90d-8584574572c2.jpg" 
+                  alt="Planned township layout with blacktop road and boundary infrastructure" 
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000 ease-out"
                 />
               </div>
@@ -172,58 +172,123 @@ export default function About() {
         </div>
       </section>
 
-      {/* 05. EDITORIAL IMAGE GRID */}
+      {/* 05. EDITORIAL REAL ESTATE PORTFOLIO GRID */}
       <section className="pb-24 md:pb-32 bg-brand-warm-white">
         <div className="container mx-auto px-6 md:px-12">
+          <div className="mb-12">
+            <span className="text-xs tracking-[0.2em] text-brand-architectural-blue uppercase font-bold mb-3 block">
+              PORTFOLIO SHOWCASE
+            </span>
+            <h3 className="text-2xl md:text-4xl font-serif text-brand-deep-navy">
+              Real Ground, Planned Futures.
+            </h3>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {/* Item 1: Salkhan Highway Commercial & Residential Project Site (Image 3) */}
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="aspect-[4/5] lg:col-span-1 overflow-hidden"
+              className="aspect-[4/3] lg:col-span-1 overflow-hidden rounded-lg shadow-sm group relative"
             >
-              <img src="/images/about/grid_aerial.jpg" alt="Aerial plotted land with agricultural surroundings" className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000 ease-out" />
+              <img 
+                src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888235/f7ab8ba4-7392-4547-b52d-93c6becee396.jpg" 
+                alt="Salkhan Varanasi Shaktinagar Highway commercial and residential plots signboard on project site" 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-6">
+                <div>
+                  <span className="text-brand-gold text-[10px] tracking-widest uppercase font-bold block mb-1">Highway Project</span>
+                  <h4 className="text-white font-serif text-lg">Salkhan-Varanasi Marg</h4>
+                </div>
+              </div>
             </motion.div>
             
+            {/* Item 2: Robertsganj Sonbhadra Project Site Signboard (Image 2) */}
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="aspect-[4/5] lg:col-span-1 overflow-hidden"
+              className="aspect-[4/3] lg:col-span-1 overflow-hidden rounded-lg shadow-sm group relative"
             >
-              <img src="/images/about/grid_family.jpg" alt="Indian family viewing a plot with a real-estate professional" className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000 ease-out" />
+              <img 
+                src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888234/2e2db374-e590-40ba-8fae-2fd3905a376b.jpg" 
+                alt="Commercial and residential plots site marker at Robertsganj Sonbhadra" 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-6">
+                <div>
+                  <span className="text-brand-gold text-[10px] tracking-widest uppercase font-bold block mb-1">Commercial & Residential</span>
+                  <h4 className="text-white font-serif text-lg">Robertsganj Development</h4>
+                </div>
+              </div>
             </motion.div>
 
+            {/* Item 3: Inspection & Plot Demarcation (Image 9) */}
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="aspect-[4/5] lg:col-span-1 overflow-hidden md:col-span-2 lg:col-span-1"
+              className="aspect-[4/3] lg:col-span-1 overflow-hidden rounded-lg shadow-sm group relative"
             >
-              <img src="/images/about/grid_development.jpg" alt="Indian low-rise residential development with landscaped road" className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000 ease-out" />
+              <img 
+                src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888415/88d54138-2ef1-4ca5-bfd6-b13d62f2b1bf.jpg" 
+                alt="Internal township road survey with electric grid poles and plot boundary lines" 
+                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-6">
+                <div>
+                  <span className="text-brand-gold text-[10px] tracking-widest uppercase font-bold block mb-1">Grid & Alignment</span>
+                  <h4 className="text-white font-serif text-lg">Infrastructure Survey</h4>
+                </div>
+              </div>
             </motion.div>
 
+            {/* Item 4: Customer Site Inspection Visit (Image 6) */}
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="aspect-[4/5] lg:col-span-2 lg:aspect-[16/9] overflow-hidden"
+              className="aspect-[16/9] lg:col-span-2 overflow-hidden rounded-lg shadow-sm group relative"
             >
-              <img src="/images/about/grid_surveyor_golden.jpg" alt="Surveyor standing on a plotted site during golden hour" className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000 ease-out" />
+              <img 
+                src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888402/8d99f43d-6fac-46d9-ac50-c5209ccbd571.jpg" 
+                alt="Site visit event canopy with vehicle and expansive land parcels" 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent flex items-end p-6 md:p-8">
+                <div>
+                  <span className="text-brand-gold text-[10px] tracking-widest uppercase font-bold block mb-1">Client Engagement</span>
+                  <h4 className="text-white font-serif text-xl md:text-2xl">On-Site Plot Inspections & Field Visits</h4>
+                  <p className="text-white/80 text-xs md:text-sm font-light mt-1 hidden sm:block">Facilitating transparent physical inspections on demarcated land parcels across Sonbhadra.</p>
+                </div>
+              </div>
             </motion.div>
 
+            {/* Item 5: Paved Roadway Ready for Settlement (Image 7) */}
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="aspect-[4/5] lg:col-span-1 overflow-hidden"
+              className="aspect-[16/9] lg:aspect-[4/3] lg:col-span-1 overflow-hidden rounded-lg shadow-sm group relative"
             >
-              <img src="/images/about/grid_modern_home.jpg" alt="Modern Indian home emerging within a semi-urban landscape" className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000 ease-out" />
+              <img 
+                src="https://res.cloudinary.com/hmjaaen2/image/upload/v1791888406/d5c71aa8-a725-4007-b90d-8584574572c2.jpg" 
+                alt="Township road network with precast boundary walls ready for construction" 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent flex items-end p-6">
+                <div>
+                  <span className="text-brand-gold text-[10px] tracking-widest uppercase font-bold block mb-1">Delivered Roads</span>
+                  <h4 className="text-white font-serif text-lg">Blacktop Roadways</h4>
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>

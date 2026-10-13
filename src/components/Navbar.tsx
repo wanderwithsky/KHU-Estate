@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Phone } from 'lucide-react';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -24,18 +25,18 @@ export default function Navbar() {
   }, [isMobileMenuOpen]);
 
   return (
-    <nav className="fixed w-full z-50 bg-white border-b border-brand-soft-grey">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12 flex justify-between items-center h-[60px]">
-        <Link to="/" className="flex items-center gap-3 relative z-50">
+    <nav className="fixed w-full z-50 bg-white border-b border-brand-soft-grey shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex justify-between items-center h-[60px]">
+        <Link to="/" className="flex items-center gap-3 relative z-50 shrink-0">
           {/* Replace src with actual logo file path when provided */}
-          <img src="/logo.png" alt="KHU Developers Logo" className="h-[40px] w-auto object-contain" onError={(e) => {
+          <img src="/logo.png" alt="KHU Developers Logo" className="h-[38px] w-auto object-contain" onError={(e) => {
             e.currentTarget.style.display = 'none';
           }} />
-          <span className="text-xl font-medium tracking-tight font-serif text-black">KHU DEVELOPERS</span>
+          <span className="text-lg md:text-xl font-medium tracking-tight font-serif text-black">KHU DEVELOPERS</span>
         </Link>
         
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center space-x-10 text-sm tracking-widest font-medium uppercase text-black/80">
+        <div className="hidden lg:flex items-center space-x-6 xl:space-x-8 text-xs xl:text-sm tracking-widest font-medium uppercase text-black/80">
           <Link to="/" className="hover:text-black transition-colors">Home</Link>
           <Link to="/projects" className="hover:text-black transition-colors">Projects</Link>
           <Link to="/about" className="hover:text-black transition-colors">About</Link>
@@ -45,7 +46,7 @@ export default function Navbar() {
           
           <div className="relative group h-[60px] flex items-center">
             <button 
-              className="bg-brand-deep-navy text-white hover:bg-brand-architectural-blue transition-colors uppercase tracking-widest cursor-pointer focus:outline-none px-6 py-2.5 text-xs font-medium rounded-md border border-transparent hover:border-brand-architectural-blue"
+              className="bg-brand-deep-navy text-white hover:bg-brand-architectural-blue transition-colors uppercase tracking-widest cursor-pointer focus:outline-none px-4 py-2 text-xs font-medium rounded-md border border-transparent hover:border-brand-architectural-blue"
               aria-haspopup="true"
             >
               Join
@@ -88,20 +89,42 @@ export default function Navbar() {
               </div>
             </div>
           </div>
+
+          {/* Prominent Header Call Button */}
+          <a
+            href="tel:+916394247451"
+            className="flex items-center gap-2 bg-brand-gold/15 hover:bg-brand-gold/25 text-brand-deep-navy px-3.5 py-2 rounded-full border border-brand-gold/40 text-xs font-bold tracking-wider transition-all duration-200 hover:scale-105"
+            aria-label="Call KHU Developers at 6394247451"
+          >
+            <Phone size={14} className="text-brand-deep-navy fill-brand-deep-navy/20" />
+            <span>6394247451</span>
+          </a>
         </div>
 
-        {/* Mobile Hamburger Button */}
-        <button 
-          className="md:hidden relative z-50 p-2 -mr-2 text-brand-deep-navy focus:outline-none focus:ring-2 focus:ring-brand-architectural-blue rounded"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-        >
-          <div className="w-6 h-5 relative flex flex-col justify-between overflow-hidden">
-            <span className={`w-full h-0.5 bg-current transform transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'rotate-45 translate-y-2.5' : ''}`} />
-            <span className={`w-full h-0.5 bg-current transition-all duration-200 ease-in-out ${isMobileMenuOpen ? 'opacity-0 translate-x-3' : 'opacity-100'}`} />
-            <span className={`w-full h-0.5 bg-current transform transition-all duration-300 ease-in-out ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
-          </div>
-        </button>
+        {/* Right side for mobile/tablet: Quick Call + Hamburger */}
+        <div className="flex items-center gap-3 lg:hidden">
+          <a
+            href="tel:+916394247451"
+            className="flex items-center gap-1.5 bg-brand-gold/15 active:bg-brand-gold/30 text-brand-deep-navy px-2.5 py-1.5 rounded-full border border-brand-gold/40 text-xs font-bold transition-transform"
+            aria-label="Call Now at 6394247451"
+          >
+            <Phone size={13} className="text-brand-deep-navy fill-brand-deep-navy/20" />
+            <span className="text-[11px] sm:text-xs">6394247451</span>
+          </a>
+
+          {/* Mobile Hamburger Button */}
+          <button 
+            className="relative z-50 p-2 -mr-2 text-brand-deep-navy focus:outline-none focus:ring-2 focus:ring-brand-architectural-blue rounded"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+          >
+            <div className="w-6 h-5 relative flex flex-col justify-between overflow-hidden">
+              <span className={`w-full h-0.5 bg-current transform transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'rotate-45 translate-y-2.5' : ''}`} />
+              <span className={`w-full h-0.5 bg-current transition-all duration-200 ease-in-out ${isMobileMenuOpen ? 'opacity-0 translate-x-3' : 'opacity-100'}`} />
+              <span className={`w-full h-0.5 bg-current transform transition-all duration-300 ease-in-out ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+            </div>
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu Overlay */}
@@ -160,6 +183,18 @@ export default function Navbar() {
                 </Link>
               </div>
             </div>
+          </div>
+
+          {/* Mobile Drawer Call CTA */}
+          <div className="pt-6 border-t border-brand-soft-grey">
+            <span className="text-xs tracking-widest uppercase text-brand-charcoal/60 mb-3 block">Direct Contact</span>
+            <a
+              href="tel:+916394247451"
+              className="flex items-center justify-center gap-3 w-full bg-brand-gold text-brand-deep-navy px-6 py-4 rounded-md uppercase tracking-widest text-sm font-bold shadow-md hover:bg-brand-architectural-blue hover:text-white transition-colors"
+            >
+              <Phone size={18} />
+              <span>Call Now: 6394247451</span>
+            </a>
           </div>
         </div>
       </div>
